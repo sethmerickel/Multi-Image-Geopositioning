@@ -294,24 +294,24 @@ while (<>) {
 
 print join ',', qw(ALG N AREA AVGX AVGY Z L_MIN AMBIG GAIN), "\n";
 @ns = ();
-for ($n=4;   $n<10;   $n++)  { push @ns, $n } # every $n=4..99
+for ($n=4;   $n<100;  $n++)  { push @ns, $n } # every $n=4..99
 for ($n=100; $n<1000; $n+=5) { push @ns, $n } # 100...995 by 5s
 for $n (@ns) {
   for (1..100) {
     @sample = random_images($n);
-    $hg  = hourglass(@sample);
-    $hgb = hourglass_brute(@sample);
+#    $hg  = hourglass(@sample);
+#    $hgb = hourglass_brute(@sample);
     $hgp = hourglass_poly(@sample);
-    $poly_gain = $hgb - $hgp;;
-    $hgp .= ",$poly_gain";
-    print 'OLDE,', $n, ',', $hg,  "\n";
-    print 'BRUT,', $n, ',', $hgb, "\n";
+#    $poly_gain = $hgb - $hgp;;
+#    $hgp .= ",$poly_gain";
+#    print 'OLDE,', $n, ',', $hg,  "\n";
+#    print 'BRUT,', $n, ',', $hgb, "\n";
     print 'POLY,', $n, ',', $hgp, "\n";
   }
 }
 
 # and finally 1000, only one sample possible
 $n = 1000;
-print 'OLDE,', $n, ',', hourglass(@iids),       "\n";
-print 'BRUT,', $n, ',', hourglass_brute(@iids), "\n";
+#print 'OLDE,', $n, ',', hourglass(@iids),       "\n";
+#print 'BRUT,', $n, ',', hourglass_brute(@iids), "\n";
 print 'POLY,', $n, ',', hourglass_poly(@iids),  "\n";
