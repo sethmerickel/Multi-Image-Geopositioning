@@ -1,0 +1,79 @@
+\documentclass{article}
+\usepackage{amsmath}
+
+\begin{document}
+
+\title{Hourglassin'}
+\author{Rube}
+\author{Seth}
+
+\section{Introduction}
+We're hourglassin'.
+
+\section{Theory}
+\subsection{MIG}
+Use least-squares to show
+$\lim_{n\rightarrow\inf}err=0$.
+
+\subsection{Hourglassin'}
+Assume two heights $z_{+} > z_{-}$, and assume a set of $N$ 3D lines
+$L_i$, none of which is horizontal. Specify the lines by their
+intersections with the planes of heights $z_\pm$ at points
+$(x_{+}^{i},y_{+}^{i}, z_+)$ and $(x_{-}^{i},y_{-}^{i}, z_-)$, for
+$i=1\ldots N$.
+
+Define
+$$x^i(\lambda) = \lambda x^i_+ + (1-\lambda) x^i_-$$
+$$y^i(\lambda) = \lambda y^i_+ + (1-\lambda) y^i_-$$
+$$z(\lambda) = \lambda z_- + (1-\lambda) z_-$$ For any $\lambda$,
+$(x^i(\lambda), y^i(\lambda), z(\lambda))$ is a point on line $L_i$;
+whether $0\le\lambda\le 1$ determines whether the point is an
+interpolation between or extrapolation beyond the $z_\pm$ planes (in
+either case, we will just use the term interpolated). Together, all
+the points $(x^i(\lambda), y^i(\lambda), z(\lambda))$ for $i=1\ldots
+N$ represent the intersection of lines $L_i$ with the plane with
+height $z(\lambda)$.
+
+The two-dimensional spread of the intersection set at a particular
+$z(\lambda)$ is a symmetric, positive definite, 2x2
+covariance matrix
+
+\[M(\lambda) =
+\begin{bmatrix}
+ var(x^i(\lambda)) && covar(x^i(\lambda),y^i(\lambda)) \\
+  -                && var(y^i(\lambda))
+\end{bmatrix}
+\]
+
+It can be shown that the covariance of the interpolalated points
+$(x^i(\lambda),y^i(\lambda))$ can be expressed in terms of variances of and covariances between the four elementary datasets $x^i_+, x^i_-, y^i_+, y^i_-$ as follows:
+
+$$var(x^i(\lambda)) = \lambda^2\sigma^2_{x+x+} + \lambda(1-\lambda)(\sigma^2_{x+x-} + \sigma^2_{x-x+}) 
+                + (1-\lambda)^2\sigma^2_{x-x-}$$
+$$var(y^i(\lambda)) = \lambda^2\sigma^2_{y+y+} + \lambda(1-\lambda)(\sigma^2_{y+y-} + \sigma^2_{y-y+}) 
+                + (1-\lambda)^2\sigma^2_{y-y-}$$
+$$covar(x^i(\lambda),y^i(\lambda)) = \lambda^2\sigma^2_{x+y+}  
+                        + \lambda(1-\lambda)(\sigma^2_{x+y-} + \sigma^2_{x-y+}) 
+                              + (1-\lambda)^2\sigma^2_{x-y-}$$
+where
+$$\sigma^2_{x+x+}=var(x^i_+),$$
+$$\sigma^2_{x+y-}=covar(x^i_+, y^i_-),$$
+etc. Note in particular that, since all the $\sigma^2$ are functions only of constants $x^i_\pm, y^i_\pm$, and $N$, each of the 4 terms of $M(\lambda)$ is a quadratic function of $\lambda$.
+
+If we denote the determinant of a matrix with $|\cdot|$, the area of the
+1-sigma error ellipse of $M(\lambda)$ is
+$$a(\lambda) = \pi\sqrt{|M(\lambda)|},$$
+i.e. the square root of a quartic (4th degree) polynomial.
+
+We seek to minimize $a(\lambda)$, which is equivalent to minimizing
+the quartic polynomial 
+$$|M(\lambda)| = var(x^i(\lambda))var(y^i(\lambda) - covar(x^i(\lambda),y^i(\lambda))^2$$
+For that polynomial to have no local minima
+except for a unique global minimum, it is sufficient to show that it's
+derivative, a cubic polynomial, has one real and two complex roots.
+
+
+ 
+
+
+\end{document}
