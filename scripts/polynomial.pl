@@ -129,7 +129,15 @@ sub compute_poly {
       unless (abs($polyarea-$area) < 1.0e-8);
   }
 
-  return ($d4, $d3, $d2, $d1, $d0);
+  return ($d4, $d3, $d2, $d1, $d0,
+          $ax,  $bx,  $cx,
+          $ay,  $by,  $cy,
+          $axy, $bxy, $cxy);
+}
+
+sub quadratic {
+  my $l = shift;
+  return $_[0]*$l*$l + $_[1]*$l + $_[2];
 }
 
 sub quartic {
@@ -139,6 +147,7 @@ sub quartic {
 }
 
 sub hourglass_poly {
+  my $n = @_;
   my @xhis=(), @yhis=(), @xlos=(), @ylos=();
   my $zhi, $zlo;
   for $iid (@_) {
@@ -152,7 +161,11 @@ sub hourglass_poly {
   }
 
   # get the coefficients of the quartic polynomial d(lambda)
-  my @d = compute_poly(\@xhis, \@yhis, \@xlos, \@ylos);
+  my @dq = compute_poly(\@xhis, \@yhis, \@xlos, \@ylos);
+  @d   = (@dq)[ 0..4];
+  @qx  = (@dq)[ 5..7];
+  @qy  = (@dq)[ 8..10];
+  @qxy = (@dq)[11..13];
 
   # minimize by solving the cubic determinant
   my @roots = Math::Polynomial::Solve::cubic_roots(
@@ -161,7 +174,7 @@ sub hourglass_poly {
   my $mal = 1-$lam;
   # other roots are complex or real together
   # make sure we don't have 3 real
-  my $ambig = '0'; # if 1 root, no ambiguity
+  my $ambig = ''; # if 1 root, no ambiguity
   if (!ref $roots[1] && !ref $roots[2]) {
     $stophere=1;
     # capture degenerate situation for later analysis
@@ -184,15 +197,45 @@ sub hourglass_poly {
     $mal = 1-$lam;
     my @sextrema = sort {$a<=>$b} @extrema;
     $ambig = $sextrema[1] - $sextrema[0];
+    $sambig = "$ambig";
+    if ($sambig =~ /i/) {
+      $stophere=1;
+    }
   }
-  my $area = $pi*sqrt(quartic($lam, @d));
+
+  # OK now we have the optimal lambda. Interpolate the intersections sliced by
+  # the plane at the optimal height
   my $sx=0, $sy=0;
   for $i ($#xhis) {
     $sx += $lam*$xhis[$i] + $mal*$xlos[$i];
     $sy += $lam*$yhis[$i] + $mal*$ylos[$i];
   }
+  my $avgx = $sx/$n;
+  my $avgy = $sy/$n;
   my $z = $lam*$zhi + $mal*$zlo;
-  return (join ',', $area, $sx/@xhis, $sy/@xhis, $z, $lam, $ambig);
+  my $dh = sqrt($avgx*$avgx, $avgy*$avgy);
+
+  # Compute error-related terms
+  my $varx = quadratic($lam, @qx);
+  my $vary = quadratic($lam, @qy);
+  my $cvar = quadratic($lam, @qxy);
+  my $area = $pi*sqrt(quartic($lam, @d));
+  # my $check = $pi*sqrt($varx*$vary - $cvar*$cvar); # should be == $area
+
+  my $inside_am = ($dh < $area/$n/$MAGIC_NUMBER);
+  my $ellipse_stat = ($varx * $avgx*$avgx
+                    + $vary * $avgy*$avgy
+                    - $cvar * $avgx*$avgy);
+
+  # $total_count++;
+  # $total_inside_am += $inside_am;
+  # $total_avg = $total_inside_am / $total_count;
+  # print STDERR "INSIDE_AM\t$n\t$total_inside_am\t$total_count\t$total_avg\n";
+
+
+  return (join ',', 'POLY', $n, $area, $avgx, $avgy, $dh, $z,
+	            $lam, $varx, $vary, $cvar, $ellipse_stat,
+                    $inside_am, $ambig, "\n");
 }
 
 
@@ -274,6 +317,8 @@ $truthx =  454936.0104;
 $truthy = 3984064.0306;
 $truthz = 1700;
 
+$MAGIC_NUMBER = 6.6;
+
 @iids = ();
 while (<>) {
   chomp;
@@ -292,7 +337,9 @@ while (<>) {
 }
 
 
-print join ',', qw(ALG N AREA AVGX AVGY Z L_MIN AMBIG GAIN), "\n";
+print join ',', qw(ALG N AREA AVGX AVGY DH Z
+                   L_MIN VARX VARY CVARXY
+                   ELL INA AMBIG), "\n";
 @ns = ();
 for ($n=4;   $n<100;  $n++)  { push @ns, $n } # every $n=4..99
 for ($n=100; $n<1000; $n+=5) { push @ns, $n } # 100...995 by 5s
@@ -306,7 +353,7 @@ for $n (@ns) {
 #    $hgp .= ",$poly_gain";
 #    print 'OLDE,', $n, ',', $hg,  "\n";
 #    print 'BRUT,', $n, ',', $hgb, "\n";
-    print 'POLY,', $n, ',', $hgp, "\n";
+    print $hgp;
   }
 }
 
@@ -314,4 +361,4 @@ for $n (@ns) {
 $n = 1000;
 #print 'OLDE,', $n, ',', hourglass(@iids),       "\n";
 #print 'BRUT,', $n, ',', hourglass_brute(@iids), "\n";
-print 'POLY,', $n, ',', hourglass_poly(@iids),  "\n";
+print hourglass_poly(@iids);
