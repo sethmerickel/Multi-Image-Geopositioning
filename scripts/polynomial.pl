@@ -219,23 +219,35 @@ sub hourglass_poly {
   my $varx = quadratic($lam, @qx);
   my $vary = quadratic($lam, @qy);
   my $cvar = quadratic($lam, @qxy);
+  $varx /= $n*$n;
+  $vary /= $n*$n;
+  $cvar /= $n*$n;
   my $area = $pi*sqrt(quartic($lam, @d));
   # my $check = $pi*sqrt($varx*$vary - $cvar*$cvar); # should be == $area
 
   my $inside_am = ($dh < $area/$n/$MAGIC_NUMBER);
-  my $ellipse_stat = ($varx * $avgx*$avgx
-                    + $vary * $avgy*$avgy
-                    - $cvar * $avgx*$avgy);
+  my $covar = Math::MatrixReal->new_from_rows( [ [$varx, $cvar],
+						 [$cvar, $vary] ]);
+  my $icov = $covar->inverse();
+  my $ellipse_stat = ($icov->element(1,1) * $avgx*$avgx
+                    + $icov->element(2,2) * $avgy*$avgy
+                  + 2*$icov->element(1,2) * $avgx*$avgy);
+  my $inside_e39 = ($ellipse_stat < 1.000);
+  my $inside_e90 = ($ellipse_stat < 4.605);
+  my $inside_e95 = ($ellipse_stat < 5.991);
 
+  # if ($n >= 50) {
   # $total_count++;
-  # $total_inside_am += $inside_am;
-  # $total_avg = $total_inside_am / $total_count;
-  # print STDERR "INSIDE_AM\t$n\t$total_inside_am\t$total_count\t$total_avg\n";
+  # $total_inside += $inside_e90;
+  # $total_avg = $total_inside / $total_count;
+  # print STDERR "INSIDE_AM\t$n\t$total_inside\t$total_count\t$total_avg\n";
+  # }
 
 
   return (join ',', 'POLY', $n, $area, $avgx, $avgy, $dh, $z,
-	            $lam, $varx, $vary, $cvar, $ellipse_stat,
-                    $inside_am, $ambig, "\n");
+	            $lam, $varx, $vary, $cvar, 
+	            $icov->element(1,1), $icov->element(2,2), $icov->element(1,2),
+	            $inside_am, $ellipse_stat, $inside_e39, $inside_e90, $inside_e95, $ambig, "\n");
 }
 
 
@@ -317,7 +329,7 @@ $truthx =  454936.0104;
 $truthy = 3984064.0306;
 $truthz = 1700;
 
-$MAGIC_NUMBER = 6.6;
+$MAGIC_NUMBER = 9.8;
 
 @iids = ();
 while (<>) {
@@ -338,8 +350,8 @@ while (<>) {
 
 
 print join ',', qw(ALG N AREA AVGX AVGY DH Z
-                   L_MIN VARX VARY CVARXY
-                   ELL INA AMBIG), "\n";
+                   L_MIN VARX VARY CVARXY INVX INVY INVXY
+                   INA ELL INE39 INE90 INE95 AMBIG), "\n";
 @ns = ();
 for ($n=4;   $n<100;  $n++)  { push @ns, $n } # every $n=4..99
 for ($n=100; $n<1000; $n+=5) { push @ns, $n } # 100...995 by 5s
