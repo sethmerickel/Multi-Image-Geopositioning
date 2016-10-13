@@ -7,6 +7,7 @@ our @ISA = qw(Exporter);
 our %EXPORT_TAGS = ( 'all'=> [qw(parse_himidlo get_his_los
 				 slice_brute  hourglass_brute
 				 compute_poly hourglass_poly
+                                 quartic quadratic
 				 random_images
 )]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
