@@ -4,7 +4,7 @@ use warnings;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ( 'all'=> [qw(parse_himidlo
+our %EXPORT_TAGS = ( 'all'=> [qw(parse_himidlo get_his_los
 				 slice_brute  hourglass_brute
 				 compute_poly hourglass_poly
 				 random_images
@@ -43,6 +43,22 @@ sub parse_himidlo {
   return $hsh;
 }
 
+sub get_his_los {
+  my $hsh = shift;
+  my @xhis=(); my @yhis=(); my @xlos=(); my @ylos=();
+  my ($zhi, $zlo);
+  for my $iid (@_) {
+    my $h = $hsh->{$iid};
+    push @xhis, $h->{xhi};
+    push @yhis, $h->{yhi};
+    push @xlos, $h->{xlo};
+    push @ylos, $h->{ylo};
+    $zhi = $h->{zhi};
+    $zlo = $h->{zlo};
+  }
+  return (\@xhis, \@yhis, \@xlos, \@ylos, $zhi, $zlo);
+}
+
 sub slice_brute {
   my $xhis = shift; # these are array references
   my $yhis = shift;
@@ -74,22 +90,13 @@ sub slice_brute {
 sub hourglass_brute {
   my $hsh = shift;
   my $nplanes = shift;
-  my @xhis=(); my @yhis=(); my @xlos=(); my @ylos=();
-  my ($zhi, $zlo);
-  for my $iid (@_) {
-    my $h = $hsh->{$iid};
-    push @xhis, $h->{xhi};
-    push @yhis, $h->{yhi};
-    push @xlos, $h->{xlo};
-    push @ylos, $h->{ylo};
-    $zhi = $h->{zhi};
-    $zlo = $h->{zlo};
-  }
+  my ($xhis, $yhis, $xlos, $ylos, $zhi, $zlo) = get_his_los($hsh, @_);
+
   my @axyzls;
   my @lams = ();
   for my $i (0..$nplanes) { push @lams, $i/$nplanes }
   for my $lam (@lams) {
-    my ($avgx, $avgy, $area) = slice_brute(\@xhis, \@yhis, \@xlos, \@ylos, $lam);
+    my ($avgx, $avgy, $area) = slice_brute($xhis, $yhis, $xlos, $ylos, $lam);
     my $zstr = sprintf "%.1f", $lam*$zhi + (1-$lam)*$zlo;
     push @axyzls, join(',', $area, $avgx, $avgy, $zstr, $lam);
   }
@@ -193,20 +200,10 @@ sub quartic {
 sub hourglass_poly {
   my $hsh = shift @_;
   my $n = @_;
-  my @xhis=(); my @yhis=(); my @xlos=(); my @ylos=();
-  my ($zhi, $zlo);
-  for my $iid (@_) {
-    my $h = $hsh->{$iid};
-    push @xhis, $h->{xhi};
-    push @yhis, $h->{yhi};
-    push @xlos, $h->{xlo};
-    push @ylos, $h->{ylo};
-    $zhi = $h->{zhi};
-    $zlo = $h->{zlo};
-  }
+  my ($xhis, $yhis, $xlos, $ylos, $zhi, $zlo) = get_his_los($hsh, @_);
 
   # get the coefficients of the quartic polynomial d(lambda)
-  my @dq = compute_poly(\@xhis, \@yhis, \@xlos, \@ylos);
+  my @dq = compute_poly($xhis, $yhis, $xlos, $ylos);
   my @d   = (@dq)[ 0..4];
   my @qx  = (@dq)[ 5..7];
   my @qy  = (@dq)[ 8..10];
@@ -230,7 +227,7 @@ sub hourglass_poly {
     push @extrema, $pi*sqrt(quartic($roots[2], @d));
     if ($ENV{DEBUG_HOURGLASS_POLY}) {
       for my $iid (@_) { print "IID,$iid\n" }
-      print "XHI,@xhis\nYHI,@yhis\nXLO,@xlos\nYLO,@ylos\n";
+      print "XHI,@$xhis\nYHI,@$yhis\nXLO,@$xlos\nYLO,@$ylos\n";
       print "ROOTS,@roots\n";
       print "VALUS,@extrema\n";
     }
@@ -251,9 +248,9 @@ sub hourglass_poly {
   # OK now we have the optimal lambda. Interpolate the intersections sliced by
   # the plane at the optimal height
   my $sx=0; my $sy=0;
-  for my $i ($#xhis) {
-    $sx += $lam*$xhis[$i] + $mal*$xlos[$i];
-    $sy += $lam*$yhis[$i] + $mal*$ylos[$i];
+  for my $i (0..$n-1) {
+    $sx += $lam*$xhis->[$i] + $mal*$xlos->[$i];
+    $sy += $lam*$yhis->[$i] + $mal*$ylos->[$i];
   }
   my $avgx = $sx/$n;
   my $avgy = $sy/$n;

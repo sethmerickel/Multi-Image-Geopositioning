@@ -20,7 +20,12 @@ select STDOUT; $| = 1; # autoflush
             9,454932.7,3984063.7,1710,454930.8,3984064.1,1700,454928.8,3984064.5,1690);
 
 $hsh = parse_himidlo(454936.0104, 3984064.0306, 1700, @lines);
-print hourglass_poly($hsh, (0..9));
+@iids = (0..9);
+($xhis, $yhis, $xlos, $ylos, $zhi, $zlo) = get_his_los($hsh, @iids);
+@dqs = compute_poly($xhis, $yhis, $xlos, $ylos);
+
+
+print hourglass_poly($hsh, @iids);
 
 
 
