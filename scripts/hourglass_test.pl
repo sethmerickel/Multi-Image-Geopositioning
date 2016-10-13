@@ -23,7 +23,7 @@ sub VERIFY {
 $pi = atan2(1,1)*4;
 
 
-for $case (0..1) {
+for $case (0..2) {
   if ($case == 0) {
     @lines = qw(0,1,1,1,0,0,0,-1,-1,-1
 		1,1,-1,1,0,0,0,-1,1,-1
@@ -45,6 +45,17 @@ for $case (0..1) {
 		9,454932.7,3984063.7,1710,454930.8,3984064.1,1700,454928.8,3984064.5,1690);
     $hsh = parse_himidlo(454936.0104, 3984064.0306, 1700, @lines);
     @iids = (0..9);
+  } elsif ($case == 2) { # degenerate bimodal case
+    @lines = qw(0,0,0,1,0,0,0,2,2,-1
+		1,0,1,1,0,0,0,2,-1,-1
+		2,1,1,0,1,0,0,0,-1,2,-1
+		3,0,1,1,1,0,0,0,-1,-1,-1
+		4,-2,-2,1,0,0,0,0,0,-1
+		5,-2,1,10,0,0,0,-1,-1
+		6,1,1,1,0,0,0,-1,-1,-1
+		7,1,-2,1,0,0,0,-1,0,-1);
+    $hsh = parse_himidlo(0,0,0, @lines);
+    @iids = (0..7);
   } else {
     die "Case $case not defined!"
   }
@@ -89,11 +100,30 @@ for $case (0..1) {
     $a2 = $pi * sqrt($vx*$vy - $cv*$cv);
     VERIFY($a1, $a2, 1.0e-12, "ideal area: poly vs vars");
   }
+
+  if ($case == 2) {
+    # special test for degenerate bimodal
+
+    # verify that 0123 and 4567 are both ideal
+    $mode0 = hourglass_poly($hsh, (0,1,2,3));
+    $mode1 = hourglass_poly($hsh, (4,5,6,7));
+    ($a0,$z0) = (split ',', $mode0)[2,6];
+    ($a1,$z1) = (split ',', $mode1)[2,6];
+    VERIFY(0, $a0, 1.0e-6, "0 area bimode 1");
+    VERIFY(0, $a1, 1.0e-6, "0 area bimode 2");
+    VERIFY(0.5, $z0, 1.0e-6, "0.5 z bimode 1");
+    VERIFY(-0.5, $z1, 1.0e-6, "-0.5 z bimode 1");
+
+
+    # now verify that there are two identical minima
+    ##### 2016-10-12 this is not working out -- test case
+    ##### not properly balanced?
+    $dmin0 = quartic(.25, @d);
+    $dmin1 = quartic(.75, @d);
+    VERIFY($dmin0, $dmin1, 1.0e-6, "identical bimodal minima");
+    $bimode = hourglass_poly($hsh, (0..7));
+
+    #print $mode0, $mode1;
+    #print $bimode;
+  }
 }
-
-
-
-
-
-
-
