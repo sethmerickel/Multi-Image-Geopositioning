@@ -46,14 +46,14 @@ for $case (0..2) {
     $hsh = parse_himidlo(454936.0104, 3984064.0306, 1700, @lines);
     @iids = (0..9);
   } elsif ($case == 2) { # degenerate bimodal case
-    @lines = qw(0,0,0,1,0,0,0,2,2,-1
-		1,0,1,1,0,0,0,2,-1,-1
-		2,1,1,0,1,0,0,0,-1,2,-1
-		3,0,1,1,1,0,0,0,-1,-1,-1
-		4,-2,-2,1,0,0,0,0,0,-1
-		5,-2,1,10,0,0,0,-1,-1
-		6,1,1,1,0,0,0,-1,-1,-1
-		7,1,-2,1,0,0,0,-1,0,-1);
+      @lines = qw(0,0,0,1,0,0,0,2,2,-1
+		  1,0,1,1,0,0,0,2,-1,-1
+		  2,1,1,1,0,0,0,-1,-1,-1
+                  3,1,0,1,0,0,0,-1,2,-1
+                  4,-2,-2,1,0,0,0,0,0,-1
+                  5,-2,1,1,0,0,0,0,-1,-1
+                  6,1,1,1,0,0,0,-1,-1,-1
+                  7,1,-2,1,0,0,0,-1,0,-1);
     $hsh = parse_himidlo(0,0,0, @lines);
     @iids = (0..7);
   } else {
@@ -111,8 +111,8 @@ for $case (0..2) {
     ($a1,$z1) = (split ',', $mode1)[2,6];
     VERIFY(0, $a0, 1.0e-6, "0 area bimode 1");
     VERIFY(0, $a1, 1.0e-6, "0 area bimode 2");
-    VERIFY(0.5, $z0, 1.0e-6, "0.5 z bimode 1");
-    VERIFY(-0.5, $z1, 1.0e-6, "-0.5 z bimode 1");
+    VERIFY( 0.5, $z0, 1.0e-4,  "0.5 z bimode 1");
+    VERIFY(-0.5, $z1, 1.0e-4, "-0.5 z bimode 2");
 
 
     # now verify that there are two identical minima
@@ -120,10 +120,19 @@ for $case (0..2) {
     ##### not properly balanced?
     $dmin0 = quartic(.25, @d);
     $dmin1 = quartic(.75, @d);
-    VERIFY($dmin0, $dmin1, 1.0e-6, "identical bimodal minima");
+    VERIFY($dmin0, $dmin1, 1.0e-6, "symmetric bimodal");
     $bimode = hourglass_poly($hsh, (0..7));
 
-    #print $mode0, $mode1;
-    #print $bimode;
+    if ($ENV{PRINT_DEGENERATE}) {
+      for ($l=0; $l<=1.005; $l+=0.01) {
+	$dp = quartic($l, @d);
+	$ap = $pi * sqrt($dp);
+	$ab = slice_brute($xhis, $yhis, $xlos, $ylos, $l);
+	VERIFY($ab, $ap, 1.0e-8, "Degen lam=$l");
+	print (join ',', 'DEGENERATE',$l, $dp, "\n");
+      }
+
+    }
+
   }
 }

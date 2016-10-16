@@ -210,6 +210,10 @@ sub hourglass_poly {
   my @qy  = (@dq)[ 8..10];
   my @qxy = (@dq)[11..13];
 
+  if ($d[0] == 0) {
+    my $stophere=1;
+  }
+
   # minimize by solving the cubic determinant
   my @roots = Math::Polynomial::Solve::cubic_roots(
 	4*$d[0], 3*$d[1], 2*$d[2], $d[3]);
@@ -271,25 +275,31 @@ sub hourglass_poly {
   #my $inside_am = ($dh < $area/$n/$MAGIC_NUMBER);
   my $covar = Math::MatrixReal->new_from_rows( [ [$varx, $cvar],
 						 [$cvar, $vary] ]);
-  my $icov = $covar->inverse();
-  my $ellipse_stat = ($icov->element(1,1) * $avgx*$avgx
-                    + $icov->element(2,2) * $avgy*$avgy
-                  + 2*$icov->element(1,2) * $avgx*$avgy);
-  my $inside_e39 = ($ellipse_stat < 1.000);
-  my $inside_e90 = ($ellipse_stat < 4.605);
-  my $inside_e95 = ($ellipse_stat < 5.991);
+  my ($icov, $ellipse_stat, $inside_e39, $inside_e90, $inside_e95)=(0)x5;
+  my ($icov00, $icov11, $icov01) = (0)x3;
+  if ($varx > 0 && $vary > 0) {
+    $icov = $covar->inverse();
+    $icov00 = $icov->element(1,1);
+    $icov11 = $icov->element(2,2);
+    $icov01 = $icov->element(1,2);
+    $ellipse_stat = ($icov00 * $avgx*$avgx
+                   + $icov11 * $avgy*$avgy
+                 + 2*$icov01 * $avgx*$avgy);
+    $inside_e39 = ($ellipse_stat < 1.000);
+    $inside_e90 = ($ellipse_stat < 4.605);
+    $inside_e95 = ($ellipse_stat < 5.991);
 
   # if ($n >= 50) {
   # $total_count++;
   # $total_inside += $inside_e90;
   # $total_avg = $total_inside / $total_count;
   # print STDERR "INSIDE_AM\t$n\t$total_inside\t$total_count\t$total_avg\n";
-  # }
+    # }
+  }
 
 
   return (join ',', 'POLY', $n, $area, $avgx, $avgy, $dh, $z,
-	            $lam, $varx, $vary, $cvar, 
-	            $icov->element(1,1), $icov->element(2,2), $icov->element(1,2),
+	            $lam, $varx, $vary, $cvar, $icov00, $icov11, $icov01,
 	            $ellipse_stat, $inside_e39, $inside_e90, $inside_e95, $ambig, "\n");
 }
 
