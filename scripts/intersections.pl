@@ -2,6 +2,7 @@
 use FindBin;
 use lib $FindBin::Bin;
 use Hourglass ':all';
+use Math::MatrixReal;
 
 select STDOUT; $| = 1; # autoflush
 
@@ -33,7 +34,8 @@ $hsh = parse_himidlo(454936.0104, 3984064.0306, 1700, @lines);
 @qy  = (@dqs)[8..10];
 @qxy = (@dqs)[11..13];
 
-print (join ',', qw(LAM VARX VARY CVAR Z X0 Y0 X1 Y1), "\n");
+print (join ',', qw(LAM VARX VARY CVAR MAJR MAJX MAJY MINR MINX MINY 
+                    ANGLE Z X0 Y0 X1 Y1), "\n");
 
 for ($lam=0; $lam <= 1; $lam += 0.25) { # or smaller increments
   $mal = 1-$lam;
@@ -47,5 +49,17 @@ for ($lam=0; $lam <= 1; $lam += 0.25) { # or smaller increments
     $y = $lam*$$yhis[$i] + $mal*$$ylos[$i];
     push @xys, $x, $y;
   }
-  print (join ',', $lam, $varx, $vary, $cvar, $z, @xys, "\n");
+
+  # compute eigenvecs/vals for 2x2
+  $matstr = "[ $varx $cvar ]\n[ $cvar $vary ]\n";
+  $cov = Math::MatrixReal->new_from_string($matstr);
+  ($evals, $evecs) = $cov->sym_diagonalize();
+  if ($evals->element(1,1) > $evals->element(2,1)) { $mj=1; $mn=2 }
+  else                                             { $mj=2; $mn=1 }
+  $angle = atan2($evecs->element(2,$mj), $evecs->element(1,$mj));
+
+  print (join ',', $lam, $varx, $vary, $cvar,
+	 sqrt($evals->element($mj,1)), $evecs->element(1,$mj), $evecs->element(2,$mj),
+	 sqrt($evals->element($mn,1)), $evecs->element(1,$mn), $evecs->element(2,$mn),
+	 $angle, $z, @xys, "\n");
 }
