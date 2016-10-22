@@ -1,6 +1,7 @@
 package Hourglass;
 use strict;
 use warnings;
+use Math::MatrixReal;
 
 require Exporter;
 our @ISA = qw(Exporter);
@@ -9,6 +10,7 @@ our %EXPORT_TAGS = ( 'all'=> [qw(parse_himidlo get_his_los
 				 compute_poly hourglass_poly
                                  quartic quadratic
 				 random_images
+                                 cov2ell
 )]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw();
@@ -322,6 +324,30 @@ sub random_images {
   return keys %used;
 }
 
+
+# Convert 2D covariance to ellipse (1-sigma)
+# Returns array of 7 elements in this order:
+# major_radius, major_axis_x, major_axis_y (x/y are unit)
+# minor_radius, minor_axis_x, minor_axis_y (x/y unit, perp. to maj)
+# angle (of major axis, radians ccw from x axis)
+sub cov2ell {
+  my $varx = shift;
+  my $vary = shift;
+  my $cvar = shift;
+
+  # compute eigenvecs/vals for 2x2
+  my $matstr = "[ $varx $cvar ]\n[ $cvar $vary ]\n";
+  my $cov = Math::MatrixReal->new_from_string($matstr);
+  my ($evals, $evecs) = $cov->sym_diagonalize();
+  my ($mj,$mn) = (1,2); # Major is first eval/vec
+  # or it could be the other way around
+  if ($evals->element(1,1) < $evals->element(2,1)) { $mj=2; $mn=1 }
+  my $angle = atan2($evecs->element(2,$mj), $evecs->element(1,$mj));
+
+  return (sqrt($evals->element($mj,1)), $evecs->element(1,$mj), $evecs->element(2,$mj),
+	  sqrt($evals->element($mn,1)), $evecs->element(1,$mn), $evecs->element(2,$mn),
+	  $angle);
+}
 
 
 
