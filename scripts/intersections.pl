@@ -9,7 +9,7 @@ if (@ARGV) {     # if you provide an input file with columns like the example be
   @lines = (<>); # slurp it in
   for (@lines) { push @iids, (split /,/)[0] }
 } else {         # else use this as an example
-  # taken from *_ERROR0.sup from himidlo_utm11n.csv
+  # taken from *_ERROR00.sup from himidlo_utm11n.csv
   # note xmid,ymid,zmid are ignored
   #         iid  xhi      yhi      zhi   xmid     ymid     zmid  xlo       ylo     zlo
   @lines = qw(0,454941.6,3984071.4,1710,454938.6,3984066.3,1700,454935.6,3984061.2,1690
@@ -24,6 +24,7 @@ if (@ARGV) {     # if you provide an input file with columns like the example be
 	      9,454932.7,3984063.7,1710,454930.8,3984064.1,1700,454928.8,3984064.5,1690);
   @iids = (0..9);
 }
+$n = @iids;
 
 $hsh = parse_himidlo(454936.0104, 3984064.0306, 1700, @lines);
 ($xhis, $yhis, $xlos, $ylos, $zhi, $zlo) = get_his_los($hsh, @iids);
@@ -34,23 +35,28 @@ $hsh = parse_himidlo(454936.0104, 3984064.0306, 1700, @lines);
 @qxy = (@dqs)[11..13];
 
 print (join ',', qw(LAM VARX VARY CVAR MAJR MAJX MAJY MINR MINX MINY 
-                    ANGLE Z X0 Y0 X1 Y1), "\n");
+                    ANGLE Z N));
+for $i (0..$n-1) { print ",X$i" }
+for $i (0..$n-1) { print ",Y$i" }
+print "\n";
 
-for ($lam=0; $lam <= 1; $lam += 0.25) { # or smaller increments
+for ($lam=0; $lam <= 1; $lam += 0.10) { # or smaller increments
   $mal = 1-$lam;
   $varx = quadratic($lam, @qx);
   $vary = quadratic($lam, @qy);
   $cvar = quadratic($lam, @qxy);
   $z = $lam*$zhi + $mal*$zlo;
-  @xys = ();
+  @xs = ();
+  @ys = ();
   for $i (0..$#iids) {
     $x = $lam*$$xhis[$i] + $mal*$$xlos[$i];
     $y = $lam*$$yhis[$i] + $mal*$$ylos[$i];
-    push @xys, $x, $y;
+    push @xs, $x;
+    push @ys, $y;
   }
 
   @ellipse = cov2ell($varx, $vary, $cvar);
 
   print (join ',', $lam, $varx, $vary, $cvar,
-	 @ellipse, $z, @xys, "\n");
+	 @ellipse, $z, $n, @xs, @ys, "\n");
 }
