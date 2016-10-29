@@ -11,6 +11,8 @@ our %EXPORT_TAGS = ( 'all'=> [qw(parse_himidlo get_his_los
                                  quartic quadratic
 				 random_images
                                  cov2ell
+				 mkmat mkdiag
+				 parse_partials wvg2i wvmig
 )]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw();
@@ -349,6 +351,121 @@ sub cov2ell {
 	  $angle);
 }
 
+
+
+sub mkmat {
+  my $nr = shift;
+  my $nc = shift;
+  my $str = "";
+  for (1..$nr) {
+    $str .= "[ ";
+    for (1..$nc) {
+      my $elt = shift;
+      $str .= "$elt ";
+    }
+    $str .= "]\n";
+  }
+  return Math::MatrixReal->new_from_string($str);
+}
+
+sub mkdiag {
+  my $n = shift;
+  my $m = Math::MatrixReal->new($n,$n);
+  for my $i (1..$n) { $m->assign($i,$i,$_[$i-1]) }
+  return $m;
+}
+
+sub parse_partials {
+  my $truthx = shift;
+  my $truthy = shift;
+  my $truthz = shift;
+
+  my $hsh = {};
+  for (@_) {
+    chomp;
+    my @ary = split /,/;
+    my $iid = $ary[0];
+    $hsh->{$iid}->{ip} = mkmat(2,1,@ary[1,2]);
+    my $x = $ary[3]; $x -= $truthx;
+    my $y = $ary[4]; $y -= $truthy;
+    my $z = $ary[5]; $z -= $truthz;
+    $hsh->{$iid}->{gp} = mkmat(3,1,$x,$y,$z);
+    $hsh->{$iid}->{gpart} = mkmat( 2,3, (@ary)[6..11]);
+    $hsh->{$iid}->{ipart} = mkmat(18,2, (@ary)[12..47]);
+  }
+
+  return $hsh;
+}
+
+
+# approximate wv g2i using a known g2i correspondence and ground partials
+sub wvg2i {
+  my $h = shift;   # hash of all sensor model data
+  my $iid = shift; # which image we are using
+  my $gp  = shift; # 3x1 Math::MatrixReal
+
+  my $gp0   = $h->{$iid}->{gp};    # 3x1
+  my $ip0   = $h->{$iid}->{ip};    # 2x1
+  my $gpart = $h->{$iid}->{gpart}; # 2x3
+  my $dgp = $gp - $gp0;
+  # use partials to propagate this difference into image space
+  my $dip = $gpart * $dgp;
+  my $ip = $ip0 + $dip;
+  return $ip; # 2x1
+}
+
+
+# lsqr MIG with lots of special assumptions about wv-ness.  this computes one
+# iteration starting from the passed-in point, so it can be iterated by calling
+# repeatedly. However, when this was implemented in C++ it was found it only
+# ever needed one iteration, because in the local area the sensor model was so
+# stable and linear.
+#
+# Initial i2g correspondences and ground and sensor partials were produced using
+# the SGXP Worldview sensor model. The parameters are 5..22, all of the position
+# and orientation params
+sub wvmig {
+  my $h  = shift;
+  my $gp = shift; # starting point
+  my @iids = @_;
+  my $n = @iids;
+
+  # assemble common sensor covariance matrix
+  my @vars = ();
+  my $sig;
+  $sig = 1.0;    push @vars, ($sig*$sig)x3; # 1m sigma for position
+  $sig /= 10;    push @vars, ($sig*$sig)x3; # velocity
+  $sig /= 10;    push @vars, ($sig*$sig)x3; # acceleration
+  $sig = 4.2e-6; push @vars, ($sig*$sig)x3; # orientation
+  $sig /= 10;    push @vars, ($sig*$sig)x3; # orientation rate
+  $sig /= 10;    push @vars, ($sig*$sig)x3; # orientation acceleration
+  my $scov = mkdiag(18, @vars);
+
+  my $sumres = 0;
+  my $btwb = mkdiag(3,  0,0,0); # initialize accumulators
+  my $btwf = mkmat(3,1, 0,0,0);
+
+  for my $iid (@iids) {
+    my $ipart = $h->{$iid}->{ipart};
+    my $W    = ~$ipart * $scov * $ipart;
+    my $Winv = $W->inverse();
+
+    my $proj = wvg2i($h, $iid, $gp);
+    my $meas = $h->{$iid}->{ip};
+    my $res  = $meas - $proj;
+    my $wres = ~$res * $Winv * $res;
+    $sumres += $wres->element(1,1);
+
+    my $gpart = $h->{$iid}->{gpart};
+    my $btw = ~$gpart * $Winv;
+    $btwb += $btw * $gpart;
+    $btwf += $btw * $res;
+  }
+  my $btwbi = $btwb->inverse(); # output covariance
+  my $dgp = $btwbi * $btwf;
+  my $refvar = $sumres / (2*$n-3);
+  return ($gp+$dgp, $btwbi, $refvar);
+}
 
 
 1;
