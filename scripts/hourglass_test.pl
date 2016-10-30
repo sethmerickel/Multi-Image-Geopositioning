@@ -179,6 +179,9 @@ $err  = $gp1 - $cpp;
 $dist = sqrt( (~$err*$err)->element(1,1));
 VERIFY(0, $dist, 0.001, "wvmig matches cpp");
 
+# send in gp that was output by cpp
+($gp2, $cov2, $refvar2) = wvmig($ph, $cpp, (0..9));
+
 ($gp2, $cov2, $refvar2) = wvmig($ph, $gp1, (0..9));
 $gp2 -= $gp1;
 $dist = sqrt( (~$gp2 * $gp2)->element(1,1) );

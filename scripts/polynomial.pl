@@ -18,6 +18,12 @@ open HIMIDLO, "$ARGV[0]";
 $hsh = parse_himidlo($truthx, $truthy, $truthz, @lines);
 @iids = keys %$hsh;
 
+if (@ARGV > 1) {
+  open PARTIALS, "$ARGV[1]"; # optional
+  @lines = (<PARTIALS>);
+  $phsh = parse_partials($truthx, $truthy, $truthz, @lines);
+}
+
 print join ',', qw(ALG N AREA AVGX AVGY DH Z
                    L_MIN VARX VARY CVARXY INVX INVY INVXY
                    ELL INE39 INE90 INE95 AMBIG), "\n";
@@ -27,14 +33,24 @@ for ($n=100; $n<1000; $n+=5) { push @ns, $n } # 100...995 by 5s
 for $n (@ns) {
   for (1..100) {
     @sample = random_images($n, @iids);
+
+    if ($phsh) {
+      $gp0 = mkmat(3,1, 1,1,1);
+      ($gp, $cov, $refvar) = wvmig($phsh, $gp0, @sample);
+      $toprint = join ',', flatten($gp), $refvar,
+                           (flatten($cov))[0,1,2,4,5,8], '';
+    } else {
+      $toprint = "";
+    }
+
 #    $hg  = hourglass(@sample);
 #    $hgb = hourglass_brute(@sample);
-    $hgp = hourglass_poly($hsh, @sample);
+    $toprint .= hourglass_poly($hsh, @sample);
 #    $poly_gain = $hgb - $hgp;;
 #    $hgp .= ",$poly_gain";
 #    print 'OLDE,', $n, ',', $hg,  "\n";
 #    print 'BRUT,', $n, ',', $hgb, "\n";
-    print $hgp;
+    print $toprint;
   }
 }
 

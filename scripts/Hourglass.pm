@@ -11,7 +11,7 @@ our %EXPORT_TAGS = ( 'all'=> [qw(parse_himidlo get_his_los
                                  quartic quadratic
 				 random_images
                                  cov2ell
-				 mkmat mkdiag
+				 mkmat mkdiag flatten
 				 parse_partials wvg2i wvmig
 )]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
@@ -375,6 +375,17 @@ sub mkdiag {
   return $m;
 }
 
+sub flatten {
+  my $m = shift;
+  my @ary = ();
+  my ($nr, $nc) = $m->dim();
+  for my $r (1..$nr) {
+  for my $c (1..$nc) {
+    push @ary, $m->element($r, $c);
+  }}
+  return @ary;
+}
+
 sub parse_partials {
   my $truthx = shift;
   my $truthy = shift;
@@ -441,30 +452,46 @@ sub wvmig {
   $sig /= 10;    push @vars, ($sig*$sig)x3; # orientation acceleration
   my $scov = mkdiag(18, @vars);
 
-  my $sumres = 0;
-  my $btwb = mkdiag(3,  0,0,0); # initialize accumulators
-  my $btwf = mkmat(3,1, 0,0,0);
+  # it 0 computes and applies the step, it 1 is partial and just computes
+  # weighted sum of residuals for refvar; returns output cov from end
+  # of first iteration
+  my $btwbinv; # output covariance
+  for my $just_resids (0..1) {
+    my $btwf = mkmat(3,1, 0,0,0); # initialize accumulators
+    my $btwb = mkdiag(3,  0,0,0);
+    my $sumres = 0;
 
-  for my $iid (@iids) {
-    my $ipart = $h->{$iid}->{ipart};
-    my $W    = ~$ipart * $scov * $ipart;
-    my $Winv = $W->inverse();
+    for my $iid (@iids) {
+      my $ipart = $h->{$iid}->{ipart};
+      my $W    = ~$ipart * $scov * $ipart;
+      my $Winv = $W->inverse();
 
-    my $proj = wvg2i($h, $iid, $gp);
-    my $meas = $h->{$iid}->{ip};
-    my $res  = $meas - $proj;
-    my $wres = ~$res * $Winv * $res;
-    $sumres += $wres->element(1,1);
+      my $proj = wvg2i($h, $iid, $gp);
+      my $meas = $h->{$iid}->{ip};
+      my $res  = $meas - $proj;
+      my $wres = ~$res * $Winv * $res;
+      $sumres += $wres->element(1,1);
+      #printf "RES %8.3f %8.3f %10.3f\n", $res->element(1,1),
+      #                                   $res->element(2,1), $sumres;
+      next if $just_resids;
 
-    my $gpart = $h->{$iid}->{gpart};
-    my $btw = ~$gpart * $Winv;
-    $btwb += $btw * $gpart;
-    $btwf += $btw * $res;
+      my $gpart = $h->{$iid}->{gpart};
+      my $btw = ~$gpart * $Winv;
+      $btwf += $btw * $res;
+      $btwb += $btw * $gpart;
+    }
+    my $refvar = $sumres / (2*$n-3);
+    #print "It $just_resids refvar = $refvar\n";
+    if ($just_resids) {
+      ###################### RETURN #################
+      return ($gp, $btwbinv, $refvar);
+    }
+
+    # compute and apply the step
+    $btwbinv = $btwb->inverse(); # also is output covariance
+    my $dgp = $btwbinv * $btwf;
+    $gp += $dgp;
   }
-  my $btwbi = $btwb->inverse(); # output covariance
-  my $dgp = $btwbi * $btwf;
-  my $refvar = $sumres / (2*$n-3);
-  return ($gp+$dgp, $btwbi, $refvar);
 }
 
 
