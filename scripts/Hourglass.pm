@@ -457,8 +457,10 @@ sub parse_projector {
       for my $cno (1..@ary) {
         $mat->assign($rno, $cno, shift @ary);
       }
-      if ($workin_on eq 'gpart' && $rno == 2)  { $hsh->{$iid}->{gpart} = $mat->clone(); $workin_on = '' }
-      if ($workin_on eq 'ipart' && $rno == 18) { $hsh->{$iid}->{ipart} = $mat->clone(); $workin_on = '' }
+      if ($workin_on eq 'gpart' && $rno == 2  && !exists($hsh->{$iid}->{gpart}))
+        { $hsh->{$iid}->{gpart} = $mat->clone(); $workin_on = '' }
+      if ($workin_on eq 'ipart' && $rno == 18 && !exists($hsh->{$iid}->{ipart}))
+        { $hsh->{$iid}->{ipart} = $mat->clone(); $workin_on = '' }
     }
   }
 
