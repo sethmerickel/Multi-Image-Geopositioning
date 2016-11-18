@@ -13,6 +13,7 @@ our %EXPORT_TAGS = ( 'all'=> [qw(parse_himidlo get_his_los
                                  cov2ell
 				 mkmat mkdiag flatten
 				 parse_partials wvg2i wvmig
+                                 parse_projector
 )]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw();
@@ -24,6 +25,9 @@ use Math::Complex;
 use Math::Polynomial::Solve;
 
 my $pi = atan(1,1)*4;
+
+
+
 
 sub parse_himidlo {
   my $truthx = shift;
@@ -407,6 +411,69 @@ sub parse_partials {
 
   return $hsh;
 }
+
+# This takes in all the lines from a projector.log that ran an hourmig for all
+# of the images. The hash that is returned has all the stuff that is in the
+# hashes returned by both parse_himidlo and parse_partials
+sub parse_projector {
+  my $truthx = shift;
+  my $truthy = shift;
+  my $truthz = shift;
+
+  my $hsh = {};
+  my $iid = '';
+  my %iidOf = ();
+  my $workin_on = '';
+  my $mat;
+
+  for (@_) {
+    if (/HOURMIG IMG/)  {
+      my $i = (split)[-2];
+      $iid  = (split)[-1];
+      $iidOf{$i} = $iid;
+    }
+
+    # note mat stored as line sample
+    if (/HOURMIG IPXY/) { $hsh->{$iid}->{ip} = mkmat(2,1,(split)[-1,-2]) }
+
+    if (/HOURMIG GPHI/) {
+      ($hsh->{$iid}->{xhi}, $hsh->{$iid}->{yhi}, $hsh->{$iid}->{zhi}) = (split)[-3,-2,-1] }
+    if (/HOURMIG GPMD/) {
+      ($hsh->{$iid}->{xmd}, $hsh->{$iid}->{ymd}, $hsh->{$iid}->{zmd}) = (split)[-3,-2,-1] }
+    if (/HOURMIG GPLO/) {
+      ($hsh->{$iid}->{xlo}, $hsh->{$iid}->{ylo}, $hsh->{$iid}->{zlo}) = (split)[-3,-2,-1] }
+
+    if (/HOURMIG_G2IXY/) {
+      my $i = (split)[-3];
+      $iid = $iidOf{$i};
+    }
+    if (/ground partials/) { $workin_on = 'gpart' }
+    if (/sensor partials/) { $workin_on = 'ipart' }
+    if (/\((\d+)x(\d+)\)\s*$/) { $mat = Math::MatrixReal->new($1, $2) }
+    if (/row\s+(\d+): (.*)/) {
+      my $rno = $1 + 1; # switch to 1-based
+      my $row = $2;
+      my @ary = split /\s+/, $row;
+      for my $cno (1..@ary) {
+        $mat->assign($rno, $cno, shift @ary);
+      }
+      if ($workin_on eq 'gpart' && $rno == 2)  { $hsh->{$iid}->{gpart} = $mat->clone(); $workin_on = '' }
+      if ($workin_on eq 'ipart' && $rno == 18) { $hsh->{$iid}->{ipart} = $mat->clone(); $workin_on = '' }
+    }
+  }
+
+  for $iid (keys %$hsh) {
+    for my $key (qw(xhi xmd xlo)) { $hsh->{$iid}->{$key} -= $truthx }
+    for my $key (qw(yhi ymd ylo)) { $hsh->{$iid}->{$key} -= $truthy }
+    for my $key (qw(zhi zmd zlo)) { $hsh->{$iid}->{$key} -= $truthz }
+    $hsh->{$iid}->{gp} = mkmat(3,1, $hsh->{$iid}->{xmd},
+                                    $hsh->{$iid}->{ymd},
+                                    $hsh->{$iid}->{zmd});
+  }
+
+  return $hsh;
+}
+
 
 
 # approximate wv g2i using a known g2i correspondence and ground partials
