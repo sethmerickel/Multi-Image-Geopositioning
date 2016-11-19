@@ -427,6 +427,7 @@ sub parse_projector {
   my $mat;
 
   for (@_) {
+    #print;
     if (/HOURMIG IMG/)  {
       my $i = (split)[-2];
       $iid  = (split)[-1];
@@ -450,10 +451,11 @@ sub parse_projector {
     if (/ground partials/) { $workin_on = 'gpart' }
     if (/sensor partials/) { $workin_on = 'ipart' }
     if (/\((\d+)x(\d+)\)\s*$/) { $mat = Math::MatrixReal->new($1, $2) }
-    if (/row\s+(\d+): (.*)/) {
+    if (/row\s+(\d+):\s+(.*)/) {
       my $rno = $1 + 1; # switch to 1-based
       my $row = $2;
       my @ary = split /\s+/, $row;
+      #print "row is: $row\n";
       for my $cno (1..@ary) {
         $mat->assign($rno, $cno, shift @ary);
       }
