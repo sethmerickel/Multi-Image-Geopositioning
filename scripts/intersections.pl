@@ -3,11 +3,18 @@ use FindBin;
 use lib $FindBin::Bin;
 use Hourglass ':all';
 
+use Getopt::Std;
+%opt = (i=>100, # default 100 random images
+        z=>10); # and 10 z-slices
+getopts('i:z:', \%opt);
+
 select STDOUT; $| = 1; # autoflush
 
-if (@ARGV) {     # if you provide an input file with columns like the example below
-  @lines = (<>); # slurp it in
-  for (@lines) { push @iids, (split /,/)[0] }
+if (@ARGV) {
+  open PRJ, $ARGV[0];
+  @lines = (<PRJ>);
+  $hsh = parse_projector(455000, 3984000, 1700, @lines);
+  @all_iids = keys %$hsh;
 } else {         # else use this as an example
   # taken from *_ERROR00.sup from himidlo_utm11n.csv
   # note xmid,ymid,zmid are ignored
@@ -22,11 +29,13 @@ if (@ARGV) {     # if you provide an input file with columns like the example be
 	      7,454932.4,3984063.3,1710,454938.8,3984067.1,1700,454945.1,3984070.9,1690
 	      8,454939.9,3984065.2,1710,454936.4,3984058.5,1700,454933.0,3984051.8,1690
 	      9,454932.7,3984063.7,1710,454930.8,3984064.1,1700,454928.8,3984064.5,1690);
-  @iids = (0..9);
+  @all_iids = (0..9);
+  $hsh = parse_himidlo(454936.0104, 3984064.0306, 1700, @lines);
 }
-$n = @iids;
 
-$hsh = parse_himidlo(454936.0104, 3984064.0306, 1700, @lines);
+$nimg = $opt{i};
+@iids = random_images($nimg, @all_iids);
+
 ($xhis, $yhis, $xlos, $ylos, $zhi, $zlo) = get_his_los($hsh, @iids);
 @dqs = compute_poly($xhis, $yhis, $xlos, $ylos);
 @d   = (@dqs)[0..4];
@@ -36,11 +45,14 @@ $hsh = parse_himidlo(454936.0104, 3984064.0306, 1700, @lines);
 
 print (join ',', qw(LAM VARX VARY CVAR MAJR MAJX MAJY MINR MINX MINY 
                     ANGLE Z N));
-for $i (0..$n-1) { print ",X$i" }
-for $i (0..$n-1) { print ",Y$i" }
+for $i (0..$nimg-1) { print ",X$i" }
+for $i (0..$nimg-1) { print ",Y$i" }
 print "\n";
 
-for ($lam=0; $lam <= 1; $lam += 0.10) { # or smaller increments
+$dz = 1.0 / $opt{z};
+#for ($lam=0; $lam <= 1; $lam += $dz) { # or smaller increments
+for $zi (0..$opt{z}) {
+  $lam = $zi * $dz;
   $mal = 1-$lam;
   $varx = quadratic($lam, @qx);
   $vary = quadratic($lam, @qy);
@@ -58,5 +70,5 @@ for ($lam=0; $lam <= 1; $lam += 0.10) { # or smaller increments
   @ellipse = cov2ell($varx, $vary, $cvar);
 
   print (join ',', $lam, $varx, $vary, $cvar,
-	 @ellipse, $z, $n, @xs, @ys, "\n");
+	 @ellipse, $z, $nimg, @xs, @ys, "\n");
 }

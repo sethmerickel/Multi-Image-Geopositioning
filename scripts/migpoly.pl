@@ -3,6 +3,10 @@ use FindBin;
 use lib $FindBin::Bin;
 use Hourglass ':all';
 
+use Getopt::Std;
+%opt = (n=>100);
+getopts('n:', \%opt);
+
 
 select STDOUT; $| = 1; # autoflush
 #$nplanes = 200; # plus 1!
@@ -26,7 +30,7 @@ ELL INE39 INE90 INE95 AMBIG), "\n";
 for ($n=4;   $n<100;  $n++)  { push @ns, $n } # every $n=4..99
 for ($n=100; $n<1000; $n+=5) { push @ns, $n } # 100...995 by 5s
 for $n (@ns) {
-  for (1..100) {
+  for (1..$opt{n}) {
     @sample = random_images($n, @iids);
 
     $gp0 = mkmat(3,1, 1,1,1);
