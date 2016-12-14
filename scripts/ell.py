@@ -22,8 +22,8 @@ def list_avg(vals):
 plt.interactive(False)
 i=0
 prevprod = 1000000.0
-makeitblack = False
-madeitblack = False
+freeze = False
+froze  = False
 for line in fileinput.input(sys.argv[1]):
     cols = line.split(',');
     if (cols[0] == 'LAM'):
@@ -39,34 +39,37 @@ for line in fileinput.input(sys.argv[1]):
     yavg = list_avg(yvals)
 
     # make an ellipse object
-    factor = 2 / math.sqrt(n)
-    #factor *= 5.991 # 95%
-    factor *= 4.605 # 90%
-    e = Ellipse(xy=[xavg,yavg], width=factor*majr, height=factor*minr, angle=a)
-    thisprod = majr * minr
-    if thisprod>prevprod:
-        if not madeitblack: 
-            makeitblack = True
-    if (makeitblack):
-        e.set_alpha(1.0) # 0=white, 1=black
-    else:
-        e.set_alpha(.25) # 0=white, 1=black
-    e.set_facecolor([1,1,1]) # white insides
-    prevprod = thisprod
+    factor = 4.605;
+    #factor = 5.991 # 95%
+    e_big = Ellipse(xy=[xavg,yavg], width=factor*majr, height=factor*minr, angle=a)
+    e_big.set_alpha(0.25)        # grey line
+    e_big.set_facecolor([1,1,1]) # white insides
+
+    factor /= math.sqrt(n)
+    e_sma = Ellipse(xy=[xavg,yavg], width=factor*majr, height=factor*minr, angle=a)
+    e_sma.set_alpha(1.0) # 0=white, 1=black
+    e_sma.set_facecolor([1,1,1]) # white insides
 
     # set up a plot; I'm not sure what 'figure' and 'subplot' are
     plt.figure(1).clear()
-    plt.subplot(111).add_artist(e)
+    plt.subplot(111).add_artist(e_big)
+    plt.subplot(111).add_artist(e_sma)
     plt.subplot(111).set_xlim(-15,15)
     plt.subplot(111).set_ylim(-15,15)
 
     # plot the stuff
     plt.plot(xvals, yvals, 'kx') # black x's
     plt.plot(0, 0, 'r+')
+    plt.plot(xavg, yavg, 'b+')
     #plt.show()
 
+    thisprod = majr * minr
+    if thisprod>prevprod and not froze:
+        freeze = True
+    prevprod = thisprod
+
     nholds = 1
-    if makeitblack:
+    if freeze:
         nholds = 10
     for holdi in (range(nholds)):
         stri = str(i)
@@ -75,6 +78,6 @@ for line in fileinput.input(sys.argv[1]):
             stri = '0' + stri
         plt.savefig('ell'+stri+'.png');
         print('ell'+stri+'.png');
-    if makeitblack:
-        makeitblack = False
-        madeitblack = True
+    if freeze:
+        freeze = False
+        froze  = True
