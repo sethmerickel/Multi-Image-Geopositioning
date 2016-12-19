@@ -4,8 +4,8 @@ use lib $FindBin::Bin;
 use Hourglass ':all';
 
 use Getopt::Std;
-%opt = (n=>100);
-getopts('n:', \%opt);
+%opt = (n=>100, m=>0);
+getopts('n:m:', \%opt);
 
 
 select STDOUT; $| = 1; # autoflush
@@ -19,6 +19,7 @@ $truthx = $truthy = $truthz = 0;
 
 @lines = (<>); # slurp up projector log
 $hsh = parse_projector($truthx, $truthy, $truthz, @lines);
+add_meas_err($hsh, $opt{m});
 @iids = sort keys %$hsh;
 
 print join ',', qw(
@@ -41,6 +42,7 @@ for $n (@ns) {
     $toprint .= hourglass_poly($hsh, @sample);
 
     print $toprint;
+    #print "\n";
   }
 }
 
@@ -54,3 +56,4 @@ $toprint = join ',', 'MIG', $n, flatten($gp), $refvar,
 $toprint .= hourglass_poly($hsh, @iids);
 
 print $toprint;
+#print "\n";

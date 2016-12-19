@@ -1,7 +1,6 @@
 package Hourglass;
 use strict;
 use warnings;
-use Math::MatrixReal;
 
 require Exporter;
 our @ISA = qw(Exporter);
@@ -12,8 +11,9 @@ our %EXPORT_TAGS = ( 'all'=> [qw(parse_himidlo get_his_los
 				 random_images
                                  cov2ell
 				 mkmat mkdiag flatten
-				 parse_partials wvg2i wvmig
+				 parse_partials wvg2i wvi2g wvmig
                                  parse_projector
+                                 add_meas_err
 )]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw();
@@ -23,6 +23,7 @@ our @EXPORT = qw();
 use Math::MatrixReal;
 use Math::Complex;
 use Math::Polynomial::Solve;
+use Math::Random;
 
 my $pi = atan(1,1)*4;
 
@@ -58,12 +59,24 @@ sub get_his_los {
   my ($zhi, $zlo);
   for my $iid (@_) {
     my $h = $hsh->{$iid};
-    push @xhis, $h->{xhi};
-    push @yhis, $h->{yhi};
-    push @xlos, $h->{xlo};
-    push @ylos, $h->{ylo};
     $zhi = $h->{zhi};
     $zlo = $h->{zlo};
+    if (exists $h->{ip} and exists $h->{merr}) {
+      my $ip = $h->{ip} + $h->{merr};
+      my $g0hi = mkmat(3,1, $h->{xhi}, $h->{yhi}, $zhi);
+      my $g0lo = mkmat(3,1, $h->{xlo}, $h->{ylo}, $zlo);
+      my $gphi = wvi2g($hsh, $iid, $g0hi, $ip);
+      my $gplo = wvi2g($hsh, $iid, $g0lo, $ip);
+      push @xhis, $gphi->element(1,1);
+      push @yhis, $gphi->element(2,1);
+      push @xlos, $gplo->element(1,1);
+      push @ylos, $gplo->element(2,1);
+    } else { # parse_himidlo doesn't have ip and merr
+      push @xhis, $h->{xhi};
+      push @yhis, $h->{yhi};
+      push @xlos, $h->{xlo};
+      push @ylos, $h->{ylo};
+    }
   }
   return (\@xhis, \@yhis, \@xlos, \@ylos, $zhi, $zlo);
 }
@@ -400,7 +413,8 @@ sub parse_partials {
     chomp;
     my @ary = split /,/;
     my $iid = $ary[0];
-    $hsh->{$iid}->{ip} = mkmat(2,1,@ary[1,2]);
+    $hsh->{$iid}->{ip}   = mkmat(2,1,@ary[1,2]);
+    $hsh->{$iid}->{merr} = mkmat(2,1, 0.0,0.0);
     my $x = $ary[3]; $x -= $truthx;
     my $y = $ary[4]; $y -= $truthy;
     my $z = $ary[5]; $z -= $truthz;
@@ -473,9 +487,23 @@ sub parse_projector {
     $hsh->{$iid}->{gp} = mkmat(3,1, $hsh->{$iid}->{xmd},
                                     $hsh->{$iid}->{ymd},
                                     $hsh->{$iid}->{zmd});
+    $hsh->{$iid}->{msig} = 0.0;
+    $hsh->{$iid}->{merr} = mkmat(2,1, 0.0, 0.0);
   }
 
   return $hsh;
+}
+
+# simulate measurement error for all the image coordinates
+sub add_meas_err {
+  my $hsh = shift; # the has from parse_projector
+  my $sig = shift; # 1-sigma of measurement error
+
+  for my $iid (keys %$hsh) {
+    my $h = $hsh->{$iid};
+    $h->{msig} = $sig;
+    $h->{merr} = mkmat(2,1, random_normal(2, 0, $sig));
+  }
 }
 
 
@@ -495,6 +523,29 @@ sub wvg2i {
   my $ip = $ip0 + $dip;
   return $ip; # 2x1
 }
+
+# approximate i2g; passed-in g0 must correspond to $h->{$iid}->{ip}, with
+# desired Z
+sub wvi2g {
+  my $h   = shift;
+  my $iid = shift;
+  my $g0  = shift;
+  my $ip  = shift;
+
+  my $gpart = $h->{$iid}->{gpart};
+  my $ip0   = $h->{$iid}->{ip};
+  # strip off Z element for horizontal movement only
+  my $gp22  = mkmat(2,2, $gpart->element(1,1), $gpart->element(1,2),
+                         $gpart->element(2,1), $gpart->element(2,2));
+  my $partinv = $gp22->inverse();
+  my $dip = $ip - $ip0;
+  my $dxy = $partinv * $dip; # delta for x and y only
+  my $dxyz = mkmat(3,1, $dxy->element(1,1), $dxy->element(2,1), 0);
+  my $gp = $g0->clone();
+  $gp += $dxyz;
+  return $gp;
+}
+
 
 
 # lsqr MIG with lots of special assumptions about wv-ness.  this computes one
@@ -535,10 +586,13 @@ sub wvmig {
     for my $iid (@iids) {
       my $ipart = $h->{$iid}->{ipart};
       my $W    = ~$ipart * $scov * $ipart;
+      my $mvar = $h->{$iid}->{msig}*$h->{$iid}->{msig};
+      $W      += mkdiag(2, $mvar, $mvar);
       my $Winv = $W->inverse();
 
       my $proj = wvg2i($h, $iid, $gp);
-      my $meas = $h->{$iid}->{ip};
+      my $meas = $h->{$iid}->{ip}
+               + $h->{$iid}->{merr};
       my $res  = $meas - $proj;
       my $wres = ~$res * $Winv * $res;
       $sumres += $wres->element(1,1);

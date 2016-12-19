@@ -166,3 +166,15 @@ VERIFY(      1.138, $refvar,           0.02,  "wvmig refvar");
 $err = $g2-$g1;
 $dist = sqrt( (~$err*$err)->element(1,1) );
 VERIFY(0, $dist, 0.00001, "wvg2i 2nd iteration~0");
+
+
+$g0 = mkmat(3,1, $h->{$iid}->{xhi}, $h->{$iid}->{yhi}, $h->{$iid}->{zhi});
+$ip = $h->{$iid}->{ip} + mkmat(2,1, 1.0, 2.0);
+$gp = wvi2g($h, $iid, $g0, $ip);
+$rt = wvg2i($h, $iid, $gp);
+$err = $rt - $ip;
+$dist = sqrt( (~$err*$err)->element(1,1) );
+VERIFY(0, $dist, 0.002, "wvi2g/g2i round trip~0");
+
+
+

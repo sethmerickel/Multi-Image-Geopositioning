@@ -28,8 +28,16 @@ sub covar {
   return ($s{$l1.$l2} - $s{$l1}*$s{$l2}/$nnn)/($nnn-1);
 }
 
+sub absavg {
+  my $sum=0;
+  my $n=@_;
+  for my $x (@_) { $sum += abs($x) }
+  return $sum/$n;
+}
 
-print (join ',', qw(N DH39 DH68 DH95 DH99 RH95 RH99
+
+print (join ',', qw(N AVGDH AVGDV 
+                           DH39 DH68 DH95 DH99 RH95 RH99
                            DZ68 DZ95 DZ99 RZ95 RZ99
                            AREA A_N_DH39 A_N_DH68
                            E39 E90 E95
@@ -38,7 +46,12 @@ print (join ',', qw(N DH39 DH68 DH95 DH99 RH95 RH99
 $K = 100;
 
 while (<>) {
-  ($n,$a,$dx,$dy,$dh,$dz,$e,$ine39,$ine90,$ine95) = (split /,/)[1,2,3,4,5,6,15,16,17,18];
+  #($n,$a,$dx,$dy,$dh,$dz,$e,$ine39,$ine90,$ine95) = (split /,/)[1,2,3,4,5,6,15,16,17,18];
+  ($n,$x,$y,$z) = (split /,/)[1,2,3,4];
+  $dx = $x-455000;
+  $dy = $y-3984000;
+  $dz = $z-1700;
+  $dh = sqrt($dx*$dx + $dy*$dy);
   next unless $n > 0;
   push @dxs, $dx;
   push @dys, $dy;
@@ -65,8 +78,11 @@ while (<>) {
     $rh95 = $dh95 / $dh68; $rz95 = $dz95 / $dz68;
     $rh99 = $dh99 / $dh68; $rz99 = $dz99 / $dz68;
 
+    $avgdh = absavg(@dhs);
+    $avgdv = absavg(@dzs);
     $avga = $suma / $nnn;
-    print (join ',', $n, $dh39, $dh68, $dh95, $dh99, $rh95, $rh99,
+    print (join ',', $n, $avgdh, $avgdv,
+                                $dh39, $dh68, $dh95, $dh99, $rh95, $rh99,
                                 $dz68, $dz95, $dz99, $rz95, $rz99,
                                 $avga, $avga/$n/$dh39, $avga/$n/$dh68,
                                 $cte39/$K, $cte90/$K, $cte95/$K,
