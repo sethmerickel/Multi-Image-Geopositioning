@@ -584,8 +584,16 @@ sub wvmig {
     my $sumres = 0;
 
     for my $iid (@iids) {
+      my $this_scov = $scov->clone();
+      if ($ENV{SCALE_MIG_ERROR}) {
+	$iid =~ /ERROR(\d\d)/;
+	my $NN = $1;
+	my $scale = 1.0 + $NN/99.0*4.0; # 00->1 99->5
+	$this_scov *= $scale*$scale;
+      }
+
       my $ipart = $h->{$iid}->{ipart};
-      my $W    = ~$ipart * $scov * $ipart;
+      my $W    = ~$ipart * $this_scov * $ipart;
       my $mvar = $h->{$iid}->{msig}*$h->{$iid}->{msig};
       $W      += mkdiag(2, $mvar, $mvar);
       my $Winv = $W->inverse();
