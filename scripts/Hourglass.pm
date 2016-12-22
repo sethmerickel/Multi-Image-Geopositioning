@@ -7,10 +7,9 @@ our @ISA = qw(Exporter);
 our %EXPORT_TAGS = ( 'all'=> [qw(parse_himidlo get_his_los
 				 slice_brute  hourglass_brute
 				 compute_poly hourglass_poly
-                                 quartic quadratic
-				 random_images
-                                 cov2ell
-				 mkmat mkdiag flatten
+                                 quartic quadratic cov2ell
+				 random_images north_images east_images
+				 mkmat mkdiag flatten sum_mats
 				 parse_partials wvg2i wvi2g wvmig
                                  parse_projector
                                  add_meas_err
@@ -343,6 +342,26 @@ sub random_images {
   return keys %used;
 }
 
+sub north_images {
+  my $hsh = shift;
+  for my $iid (keys %$hsh) {
+    my $dy = $hsh->{$iid}->{yhi} - $hsh->{$iid}->{ylo};
+    if ($dy > 0) {
+      delete $hsh->{$iid};
+    }
+  }
+}
+
+sub east_images {
+  my $hsh = shift;
+  for my $iid (keys %$hsh) {
+    my $dx = $hsh->{$iid}->{xhi} - $hsh->{$iid}->{xlo};
+    if ($dx > 0) {
+      delete $hsh->{$iid};
+    }
+  }
+}
+
 
 # Convert 2D covariance to ellipse (1-sigma)
 # Returns array of 7 elements in this order:
@@ -373,23 +392,36 @@ sub cov2ell {
 sub mkmat {
   my $nr = shift;
   my $nc = shift;
-  my $str = "";
-  for (1..$nr) {
-    $str .= "[ ";
-    for (1..$nc) {
-      my $elt = shift;
-      $str .= "$elt ";
-    }
-    $str .= "]\n";
-  }
-  return Math::MatrixReal->new_from_string($str);
+  my $mat = Math::MatrixReal->new($nr, $nc);
+  for my $r (1..$nr) {
+  for my $c (1..$nc) {
+    $mat->assign($r, $c, shift);
+  }}
+  return $mat;
 }
 
 sub mkdiag {
   my $n = shift;
   my $m = Math::MatrixReal->new($n,$n);
-  for my $i (1..$n) { $m->assign($i,$i,$_[$i-1]) }
+  for my $i (1..$n) { $m->assign($i,$i, shift) }
   return $m;
+}
+
+sub fillmat {
+  my $mat = shift;
+  my $nr = $mat->[1];
+  my $nc = $mat->[2];
+  for my $r (1..$nr) {
+  for my $c (1..$nc) {
+    $mat->assign($r, $c, shift);
+  }}
+}
+
+sub filldiag {
+  my $mat = shift;
+  $mat->zero();
+  my $nr = $mat->[1];
+  for my $r (1..$nr) { $mat->assign($r,$r, shift) }
 }
 
 sub flatten {
@@ -546,7 +578,21 @@ sub wvi2g {
   return $gp;
 }
 
+sub sum_mats {
+  if (@_ == 2) { return $_[0] + $_[1] }
+  if (@_ == 1) { return $_[0] }
 
+  # 0,-1 (first,last), 1,-2, 2,-3, ... lone middle if necessary
+  my @sums;
+  my $n_2 = int(@_/2);
+  for my $i (1..$n_2) {
+    push @sums, $_[$i-1] + $_[-$i];
+  }
+  if (@_ % 2) { 
+    push @sums, $_[$n_2]
+  }
+  return sum_mats(@sums);
+}
 
 # lsqr MIG with lots of special assumptions about wv-ness.  this computes one
 # iteration starting from the passed-in point, so it can be iterated by calling
@@ -574,44 +620,51 @@ sub wvmig {
   $sig /= 10;    push @vars, ($sig*$sig)x3; # orientation acceleration
   my $scov = mkdiag(18, @vars);
 
+  # construct working matrices up front
+  my $W    = Math::MatrixReal->new(2,2);
+  my $Winv = Math::MatrixReal->new(2,2);
+  my $Wmeas= Math::MatrixReal->new(2,2);
+  my $proj = Math::MatrixReal->new(2,1);
+  my $meas = Math::MatrixReal->new(2,1);
+  my $res  = Math::MatrixReal->new(2,1);
+  my $wres = Math::MatrixReal->new(1,1);
+  my $btw  = Math::MatrixReal->new(2,3);
+  my $btwbinv = Math::MatrixReal->new(3,3);
+
   # it 0 computes and applies the step, it 1 is partial and just computes
   # weighted sum of residuals for refvar; returns output cov from end
   # of first iteration
-  my $btwbinv; # output covariance
   for my $just_resids (0..1) {
-    my $btwf = mkmat(3,1, 0,0,0); # initialize accumulators
-    my $btwb = mkdiag(3,  0,0,0);
+    my (@btwfs, @btwbs);
     my $sumres = 0;
 
+    my $scale = 1.0;
     for my $iid (@iids) {
-      my $this_scov = $scov->clone();
+      $W = ~($h->{$iid}->{ipart}) * $scov * $h->{$iid}->{ipart};
       if ($ENV{SCALE_MIG_ERROR}) {
 	$iid =~ /ERROR(\d\d)/;
 	my $NN = $1;
-	my $scale = 1.0 + $NN/99.0*4.0; # 00->1 99->5
-	$this_scov *= $scale*$scale;
+	$scale = 1.0 + $NN/99.0*4.0; # 00->1 99->5
       }
-
-      my $ipart = $h->{$iid}->{ipart};
-      my $W    = ~$ipart * $this_scov * $ipart;
+      $W *= $scale * $scale;
       my $mvar = $h->{$iid}->{msig}*$h->{$iid}->{msig};
-      $W      += mkdiag(2, $mvar, $mvar);
-      my $Winv = $W->inverse();
+      filldiag($Wmeas, $mvar, $mvar);
+      $W      += $Wmeas;
+      $Winv = $W->inverse();
 
-      my $proj = wvg2i($h, $iid, $gp);
-      my $meas = $h->{$iid}->{ip}
-               + $h->{$iid}->{merr};
-      my $res  = $meas - $proj;
-      my $wres = ~$res * $Winv * $res;
+      $proj = wvg2i($h, $iid, $gp);
+      $meas = $h->{$iid}->{ip}
+            + $h->{$iid}->{merr};
+      $res  = $meas - $proj;
+      $wres = ~$res * $Winv * $res;
       $sumres += $wres->element(1,1);
       #printf "RES %8.3f %8.3f %10.3f\n", $res->element(1,1),
       #                                   $res->element(2,1), $sumres;
       next if $just_resids;
 
-      my $gpart = $h->{$iid}->{gpart};
-      my $btw = ~$gpart * $Winv;
-      $btwf += $btw * $res;
-      $btwb += $btw * $gpart;
+      $btw = ~($h->{$iid}->{gpart}) * $Winv;
+      push @btwfs, $btw * $res;
+      push @btwbs, $btw * $h->{$iid}->{gpart};
     }
     my $refvar = $sumres / (2*$n-3);
     #print "It $just_resids refvar = $refvar\n";
@@ -621,7 +674,9 @@ sub wvmig {
     }
 
     # compute and apply the step
+    my $btwb = sum_mats(@btwbs);
     $btwbinv = $btwb->inverse(); # also is output covariance
+    my $btwf = sum_mats(@btwfs);
     my $dgp = $btwbinv * $btwf;
     $gp += $dgp;
   }

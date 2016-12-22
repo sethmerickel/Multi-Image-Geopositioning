@@ -140,6 +140,27 @@ for $case (0..2) {
 
 ######################## test that wvg2i and wvmig matches C++ implementation
 
+# test sum_mats
+@mats = ( mkdiag(1,1) );
+$sum = sum_mats(@mats);
+VERIFY(1,  $sum->element(1,1), 0.5, "sum 1");
+push @mats, mkdiag(1,2);
+$sum = sum_mats(@mats);
+VERIFY(3,  $sum->element(1,1), 0.5, "sum 2");
+push @mats, mkdiag(1,3);
+$sum = sum_mats(@mats);
+VERIFY(6,  $sum->element(1,1), 0.5, "sum 3");
+push @mats, mkdiag(1,4);
+$sum = sum_mats(@mats);
+VERIFY(10, $sum->element(1,1), 0.5, "sum 4");
+push @mats, mkdiag(1,5);
+$sum = sum_mats(@mats);
+VERIFY(15, $sum->element(1,1), 0.5, "sum 5");
+push @mats, mkdiag(1,6);
+$sum = sum_mats(@mats);
+VERIFY(21, $sum->element(1,1), 0.5, "sum 6");
+
+
 # all the partial derivatives and g2i correspondences are in here
 # as well as results to verify against
 open PRJ, 'hourmig10.txt';
