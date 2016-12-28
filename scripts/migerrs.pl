@@ -15,6 +15,7 @@ while (<>) {
   @ary = split /,/;
   #  0  1 2 3 4  5  6    7      8      9    10     11
   # ALG,N,X,Y,Z,REF,VARX,CVARXY,CVARXZ,VARY,CVARYZ,VARZ
+  $nimg = $ary[1];
   $xyz = mkmat(3,1, (@ary)[2,3,4]);
   $dxyz = $xyz - $truth;
   $cov = mkmat(3,3, (@ary)[6,7,8, 7,9,10, 8,10,11]);
@@ -30,6 +31,7 @@ while (<>) {
   for $i (0..$#thresh) {
     if ($ellipse_constant < $thresh[$i]) {
       $count[$i] += 1;
+      $ct->{$nimg}->{$i} += 1;
     }
   }
 }
@@ -39,4 +41,14 @@ for $i (0..$#thresh) {
   $should = $percent[$i];
   $is = $count[$i] / $n;
   printf "should be %.2f less than %5.2f;   is: %.2f\n", $should, $thresh[$i], $is;
+}
+
+for $nimg (sort {$a<=>$b} keys %$ct) {
+  @pary = ($nimg);
+  for $i (0..$#thresh) {
+    $should = $percent[$i];
+    $is = $ct->{$nimg}->{$i} / 100;
+    push @pary, $is;
+  }
+  print (join ',', @pary, "\n");
 }
