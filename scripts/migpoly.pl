@@ -5,7 +5,7 @@ use Hourglass ':all';
 
 use Getopt::Std;
 %opt = (n=>100, m=>0);
-getopts('n:m:hq', \%opt);
+getopts('n:m:hqio', \%opt);
 
 
 select STDOUT; $| = 1; # autoflush
@@ -23,6 +23,8 @@ $hsh = parse_projector($truthx, $truthy, $truthz, @lines);
 # if half or quarter is selected, delete southern/western looks
 if ($opt{h} || $opt{q}) { north_images($hsh) }
 if            ($opt{q}) {  east_images($hsh) }
+if ($opt{i})            { inner_images($hsh) }
+if ($opt{o})            { outer_images($hsh) }
 @iids = sort keys %$hsh;
 $nimg = @iids;
 
