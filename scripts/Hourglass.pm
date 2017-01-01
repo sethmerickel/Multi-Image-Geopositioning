@@ -8,7 +8,9 @@ our %EXPORT_TAGS = ( 'all'=> [qw(parse_himidlo get_his_los
 				 slice_brute  hourglass_brute
 				 compute_poly hourglass_poly
                                  quartic quadratic cov2ell
-				 random_images north_images east_images
+                                 north_images east_images 
+                                 inner_images outer_images
+				 random_images 
 				 mkmat mkdiag flatten sum_mats
 				 parse_partials wvg2i wvi2g wvmig
                                  parse_projector
@@ -359,6 +361,46 @@ sub east_images {
     if ($dx > 0) {
       delete $hsh->{$iid};
     }
+  }
+}
+
+sub sort_obliquity {
+  my $hsh = shift;
+  my @tilt_iid = ();
+  for my $iid(keys %$hsh) {
+    my $dx = $hsh->{$iid}->{xhi} - $hsh->{$iid}->{xlo};
+    my $dy = $hsh->{$iid}->{yhi} - $hsh->{$iid}->{ylo};
+    my $tilt = $dx*$dx + $dy*$dy;
+    push @tilt_iid, $tilt . " $iid";
+  }
+  return (sort
+	  {(split / /, $a)[0] <=> (split / /, $b)[0]}
+	      @tilt_iid);
+}
+
+sub inner_images {
+  my $hsh = shift;
+  my @list = sort_obliquity($hsh);
+  my $n = int(@list / 2);
+  my @halflist = (@list)[$n..$#list]; # delete these
+  my @iids = ();
+  for (@halflist) {
+    / (.*)/;
+    my $iid = $1;
+    delete $hsh->{$1};
+  }
+}
+
+sub outer_images {
+  my $hsh = shift;
+  my @list = sort_obliquity($hsh);
+  my $n = int(@list / 2);
+  my @halflist = (@list)[0..$n-1];
+  my @iids = ();
+  for (@halflist) {
+    / (.*)/;
+    my $iid = $1;
+    delete $hsh->{$1};
   }
 }
 
