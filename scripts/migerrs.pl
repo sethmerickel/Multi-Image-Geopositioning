@@ -16,8 +16,12 @@ while (<>) {
   #  0  1 2 3 4  5  6    7      8      9    10     11
   # ALG,N,X,Y,Z,REF,VARX,CVARXY,CVARXZ,VARY,CVARYZ,VARZ
   $nimg = $ary[1];
+  last if $nimg == 1000;
   $xyz = mkmat(3,1, (@ary)[2,3,4]);
   $dxyz = $xyz - $truth;
+
+  $dxyz *= 1.0/sqrt( (1000-$nimg)/(1000-1) );
+
   $cov = mkmat(3,3, (@ary)[6,7,8, 7,9,10, 8,10,11]);
   #$refvar = $ary[5];
   #if ($refvar > 1) {
@@ -42,6 +46,8 @@ for $i (0..$#thresh) {
   $is = $count[$i] / $n;
   printf "should be %.2f less than %5.2f;   is: %.2f\n", $should, $thresh[$i], $is;
 }
+
+exit;
 
 for $nimg (sort {$a<=>$b} keys %$ct) {
   @pary = ($nimg);
