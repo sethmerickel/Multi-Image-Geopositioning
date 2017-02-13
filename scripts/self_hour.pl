@@ -21,10 +21,12 @@ $hsh = parse_projector(0,0,0, @lines);
 
 @all_iids = sort keys %$hsh;
 
-print (join ',', qw(Nbig Nsma Krpt HX HY HZ VX VY VZ CXY CXZ CYZ
-                                   MX MY MZ VX VY VZ CXY CXZ CYZ), "\n");
+print (join ',', qw(Niter Nbig Nsma Krpt HX HY HZ M_VX VY VZ CXY CXZ CYZ
+                                                FPC_VX VY VZ CXY CXZ CYZ
+                                                  N_VX VY VZ CXY CXZ CYZ
+                                         MX MY MZ   VX VY VZ CXY CXZ CYZ), "\n");
 
-for (1..$opt{r}) {
+for $rpt (1..$opt{r}) {
   @iids = random_images($opt{n}, @all_iids);
   $sumx  = $sumy  = $sumz  = 0;
   $sumxx = $sumyy = $sumzz = 0;
@@ -52,18 +54,21 @@ for (1..$opt{r}) {
     $cov = mkmat(3,3, $covxx, $covxy, $covxz,
                       $covxy, $covyy, $covyz,
 	              $covxz, $covyz, $covzz);
-    #print "$cov\n";
-    $cov *= sqrt( ($opt{n}-$opt{m}) / ($opt{n}-1) );
-    #print "$cov\n";
   }
+  @hc = flatten($cov); # raw sample covariance of the k m-samples
+  # apply finite population correction factor, no sqrt because in variance
+  # space, not stdev space
+  $cov *= ($opt{n}-1) / ($opt{n}-$opt{m});
+  @fc = flatten($cov);
+  # apply 1/sqrt(n) projection from m-samples to n-population, except not sqrt
+  $cov *= $opt{m} / $opt{n};
+  @nc = flatten($cov);
 
   $hour = hourglass_poly($hsh, @iids);
   ($x,$y,$z) = (split /,/, $hour)[3,4,6];
   $hourx = $x - $truthx;
   $houry = $y - $truthy;
   $hourz = $z - $truthz;
-  $cov *= sqrt($opt{m}/$opt{n});
-  @hc = flatten($cov);
 
   $gp0 = mkmat(3,1, 1,1,1);
   ($gp, $cov, $refvar) = wvmig($hsh, $gp0, @iids);
@@ -72,8 +77,10 @@ for (1..$opt{r}) {
   $migz = $gp->element(3,1) - $truthz;
   @mc = flatten($cov);
 
-  print (join ',', $opt{n}, $opt{m}, $opt{k},
+  print (join ',', $rpt, $opt{n}, $opt{m}, $opt{k},
 	 $hourx, $houry, $hourz, $hc[0], $hc[4], $hc[8], $hc[1], $hc[2], $hc[5],
+                                 $fc[0], $fc[4], $fc[8], $fc[1], $fc[2], $fc[5],
+                                 $nc[0], $nc[4], $nc[8], $nc[1], $nc[2], $nc[5],
 	 $migx,  $migy,  $migz,  $mc[0], $mc[4], $mc[8], $mc[1], $mc[2], $mc[5], "\n");
 
 }
