@@ -1,0 +1,379 @@
+\documentclass{amsart}
+%\documentclass{article}
+%\usepackage{amsmath}
+\usepackage{graphicx} % for png figures
+
+\begin{document}
+
+\newcommand{\Iimg}{\mathcal{I}}
+\newcommand{\Pimg}{\mathcal{P}}
+
+\title{Hourglassin'}
+\author{Rube}
+\author{Seth}
+\begin{abstract}
+Abstract goes here
+\end{abstract}
+\maketitle
+
+\section{Introduction}
+We be MIG'n and hourglassin'.
+
+\section{Least-Squares Multi-Image Geopositioning With Many Images}
+\subsection{MIG}\label{MIG}
+Use least-squares to show
+$\lim_{n\rightarrow\inf}err=0$.
+
+\subsection{Simulation with Synthetic Imagery}
+In this section we develop a large simulated testbed, and evaluate Least-squares
+MIG with various experimental measures for estimated error, on samples of
+randomly-selected subsets of images, of size ranging from 4 to 1000.
+
+To develop the test set, we start with a large as possible set of real,
+unadjusted sensor models which have common overlap. From \cite{MIN} we have 10
+Worldview-1 sensor models which all view the ground location 36N 117.5W 1700mHAE
+(WGS84). This point is set as Ground Truth.
+
+We then extend the set of real sensor models by random perturbation. We
+repeatedly add random amounts of correction to position and orientation
+adjustable parameters. The random corrections are sampled from uniform
+distributions with bounds many times the nominal triangulation defaults, with
+the aim of spreading the simulated sensors as uniformly as possible, minimizing
+clustering around the original sensor models. (See resulting clustering in Fig
+\ref{clusterfig}). Most large random perturbations of this kind will steer the
+real sensor models away from viewing our truth point. Sensor models that still
+contain the truth point within their image bounds are retained, until we have 99
+perturbations for each original, real sensor model, for a total of 1000 sensor
+models.
+
+The simulated set of 1000 images thus constructed is considered the Truth set of
+sensor models, with position and orientation parameters that perfectly represent
+conditions at image collection, to which actual sensor models would be imperfect
+estimates. The sensor model's ground to image function is used to project the
+truth point into image coordinates for each sensor model. These image
+measurements are retained as truth as well. The ray bundle emanating from these
+truth image points intersect perfectly (to within computational precision of the
+image to ground function) at the truth point in ground space. Thus MIG would
+yield the truth ground point, for 1000 images or for any subset. Call this
+idealized set of images $\Iimg$.
+
+Once $\Iimg$ is assembled, experiments can be conducted by adding a controlled
+amount of error (randomly sampled from a known distribution) to each sensor
+model. The 1000 sensor models thus perturbed represent a possible realization of
+1000 images with position and orientation parameters being different from their
+actual truth. The idealized image measurements can be used (because that is
+where the visualization of the ground feature actually appears), a controlled
+amount of error can be added in image space (to represent a desired amount of
+image measurement error, or unmodeled sensor error). Using perturbed image
+measurements/sensor models, the resulting ray bundle will represent a realistic
+spread of image rays around the truth point, to which MIG and Hourglassing
+algorithms can be applied and evaluated. This procedure can be carried out for
+any subset of $N$ images, in fact for any number of $N$-image samples.
+
+Let $\Pimg$ be the set of 1000 perturbed images. In this experiment, for each
+$N\in{4,5,...100,105,110,...995,1000}$, subsets of $N$ images are sampled from
+the $\Pimg$ perturbed images $k=100$ times (except for $N=1000$, where the
+entire set is used only $k=1$ times). MIG is used to estimate the geolocation of
+the point using the $N$-image subset. Because we know the truth ground point,
+the trivial intersection of $\Iimg$, we can compute the actual error of each of
+these MIGs.
+
+Figure \ref{fig:vanillaref} shows the reference variances of every MIG from this
+experiment. Reference variance is tightly clustered around 1, which demonstrates
+that the use of apriori covariance in the MIG calculations is consistent with
+the errors involved in the perturbation of $\Pimg$.
+
+Figure \ref{fig:vanillaxyz} shows the average of errors in the X, Y, and Z
+dimensions. Each point represents an average over $k=100$ MIGS. Because errors
+in positive and negative directions cancel each other out in these averages,
+this graph shows the amount of bias in the MIG calculations across
+$N$-subsets. For the full set $\Pimg$ ($N=1000$), $dX\approx 0$, $dY\approx
+-3$cm, and $dZ\approx 5$cm. This is the overall error that perturbation
+introduced into $\Pimg$, and it is clear that the average MIG converges to this,
+showing that the MIG is not a biased estimate.
+
+To avoid positive and negative errors cancelling each other out, we switch to
+positive quantities. Figure \ref{fig:vanilla_pred_meas} shows the average
+predicted and measured CE90/LE90 for each $N$ across the $k=100$ MIGs for that
+$N$. To clarify the rate of convergence and separation of the curves, a
+logarithmic scale is used. (The measured errors are adjusted with a finite
+population correction of $\sqrt{(1000-N)/(1000-1)}$.)
+
+Figure \ref{fig:vanilla_pred_meas_sqrtn} multiplies each point from Figure
+\ref{fig:vanilla_pred_meas} by a factor of $\sqrt N$. The flatness of these
+curves demonstrates the thesis of this paper, that MIG follows the Law of Large
+Numbers, and exhibits error that decreases as $1/\sqrt N$. (The upturn of
+measured error near $N=1000$ is a result of the limitations of the finite
+population correction near the total finite population.)
+
+
+\begin{figure}
+\includegraphics[width=\textwidth]{fig_refvar.png}
+\caption{\label{fig:vanillaref}All reference variances}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=\textwidth]{fig_avgxyz.png}
+\caption{\label{fig:vanillaxyz}Average Errors in X, Y, and Z}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=\textwidth]{fig_pred_meas.png}
+\caption{\label{fig:vanilla_pred_meas}Pred/Meas CE90/LE90 (log scale)}
+\end{figure}
+
+\begin{figure}
+\includegraphics[width=\textwidth]{fig_pred_meas_sqrtn.png}
+\caption{\label{fig:vanilla_pred_meas_sqrtn}Pred/Meas CE90/LE90, multiplied by $\sqrt N$}
+\end{figure}
+
+
+\section{Hourglassin'}
+\subsection{Motivation}
+Because available sensor models (such as RPC) often lack a meaningful
+error model to input to MIG, and for computational simplicity, we
+introduce a heuristic approach as an alternative to rigorous
+least-squares MIG. Although when visualized 'up close' to the true
+answer, any particular tangle of rays may seem unclear about where the
+ground point should be localized, from a global perspective, the ray
+bundle will be something like a cone, widening to the cluster of
+satellite (or airborne) perspective centers, narrowing at the ground
+point, and widening again beyond the ground point. We seek the answer
+at the narrowest point of the cone. In an ideal case, the ray bundle
+will intersect at a single point, which has cross-sectional area of
+0. In a real-world case, the bundle will appear as a cone with a `fat'
+intersection. Thus the name `hourglassing' to motivate the heuristic
+technique.
+
+Given a bundle of rays, we can intersect the bundle with planes of
+various heights, compute the collection of intersections of the ray
+bundle with each height plane, measure the spread of the 2-D
+distribution of points, and choose the plane with the least spread to
+be the solution for the height of the desired ground point. For the
+horizontal location of the ground point, the natural choice is the
+mean of the intersection points in the chosen plane.
+
+Rather than attacking this problem with a brute force search for the
+spread-minimizing by computing intersection sets at very many heights,
+and slicing height space sufficiently thin to achieve a desired
+vertical resolution, we attempt some theoretical underpinnings for
+this technique that will allow a more efficient and precise solution,
+and help motivate a meaningful estimate of the error of the resulting
+ground point.
+
+\subsection{Computing height of minimum spread}
+Assume two heights $z_{+} > z_{-}$, and assume a set of $N$ 3D lines
+$L_i$, none of which is horizontal. Specify the lines by their
+intersections with the planes of heights $z_\pm$ at points
+$(x_{+}^{i},y_{+}^{i}, z_+)$ and $(x_{-}^{i},y_{-}^{i}, z_-)$, for
+$i=1\ldots N$.
+
+Define
+$$x^i(\lambda) = \lambda x^i_+ + (1-\lambda) x^i_-$$
+$$y^i(\lambda) = \lambda y^i_+ + (1-\lambda) y^i_-$$
+$$z(\lambda) = \lambda z_- + (1-\lambda) z_-$$ For any $\lambda$,
+$(x^i(\lambda), y^i(\lambda), z(\lambda))$ is a point on line $L_i$;
+whether $0\le\lambda\le 1$ determines whether the point is an
+interpolation between or extrapolation beyond the $z_\pm$ planes (in
+either case, we will just use the term interpolated). Together, all
+the points $(x^i(\lambda), y^i(\lambda), z(\lambda))$ for $i=1\ldots
+N$ represent the intersection of lines $L_i$ with the plane with
+height $z(\lambda)$.
+
+Note that the set of all means
+$(\bar{x}(\lambda),\bar{y}(\lambda),z(\lambda))$ comprise a line. For
+the plane at height $z(\lambda)$ that yields the smallest spread of
+points $(x^i(\lambda),y^i(\lambda)$ will be the point on that line
+which we choose as our answer.
+
+The two-dimensional spread of the intersection set at a particular
+$z(\lambda)$ is a symmetric, positive definite, 2x2
+covariance matrix
+
+\[M(\lambda) =
+\begin{bmatrix}
+ var(x^i(\lambda)) && covar(x^i(\lambda),y^i(\lambda)) \\
+  -                && var(y^i(\lambda))
+\end{bmatrix}
+\]
+
+It can be shown that the covariance of the interpolalated points
+$(x^i(\lambda),y^i(\lambda))$ can be expressed in terms of variances of and covariances between the four elementary datasets $x^i_+, x^i_-, y^i_+, y^i_-$ as follows:
+
+\begin{equation}\label{varx}
+var(x^i(\lambda)) = \lambda^2\sigma^2_{x+x+} + \lambda(1-\lambda)(\sigma^2_{x+x-} + \sigma^2_{x-x+}) 
+                + (1-\lambda)^2\sigma^2_{x-x-}
+\end{equation}
+\begin{equation}\label{vary}
+var(y^i(\lambda)) = \lambda^2\sigma^2_{y+y+} + \lambda(1-\lambda)(\sigma^2_{y+y-} + \sigma^2_{y-y+}) 
+                + (1-\lambda)^2\sigma^2_{y-y-}\end{equation}
+\begin{equation}\label{covarxy}
+covar(x^i(\lambda),y^i(\lambda)) = \lambda^2\sigma^2_{x+y+}  
+                        + \lambda(1-\lambda)(\sigma^2_{x+y-} + \sigma^2_{x-y+}) 
+                              + (1-\lambda)^2\sigma^2_{x-y-}
+\end{equation}
+
+where
+$$\sigma^2_{x+x+}=var(x^i_+),$$
+$$\sigma^2_{x+y-}=covar(x^i_+, y^i_-),$$
+etc. Note in particular that, since all the $\sigma^2$ are functions only of constants $x^i_\pm, y^i_\pm$, and $N$, each of the 4 terms of $M(\lambda)$ is a quadratic function of $\lambda$.
+
+If we denote the determinant of a matrix with $|\cdot|$, the area of the
+1-sigma error ellipse of $M(\lambda)$ is
+$$a(\lambda) = \pi\sqrt{|M(\lambda)|},$$
+i.e. the square root of a quartic (4th degree) polynomial.
+
+We seek to minimize $a(\lambda)$, which is equivalent to minimizing
+the quartic polynomial 
+\begin{equation*}
+d(\lambda) = |M(\lambda)| \\
+           = var(x^i(\lambda))var(y^i(\lambda)) - covar(x^i(\lambda),y^i(\lambda))^2
+\end{equation*}
+
+Note that, for efficient computation, the quadratic, linear, and
+constant coefficients of equations (\ref{varx}-\ref{covarxy}) can be
+computed to yield
+
+\begin{equation}\label{qx}
+var(x^i(\lambda)) = a_x\lambda^2 + b_x\lambda + c_x
+\end{equation}
+\begin{equation}\label{qy}
+var(y^i(\lambda)) = a_y\lambda^2 + b_y\lambda + c_y
+\end{equation}
+\begin{equation}\label{qxy}
+covar(x^i(\lambda),y^i(\lambda)) = a_{xy}\lambda^2 + b_{xy}\lambda + c_{xy}
+\end{equation}
+
+Given coefficients computed in equations (\ref{qx}-\ref{qxy}),
+$d(\lambda)$ can then be expressed as
+\begin{equation*}\label{d}
+d(\lambda) = (a_x\lambda^2 + b_x\lambda + c_x)(a_y\lambda^2 + b_y\lambda + c_y) - 
+(a_{xy}\lambda^2 + b_{xy}\lambda + c_{xy})^2
+\end{equation*}
+\begin{equation}
+= (a_xa_y-a_{xy}^2)\lambda^4 + (\ldots)\lambda^3 + (\ldots)\lambda^2 + (\ldots)\lambda + (\ldots)
+\end{equation}
+
+The value $\lambda_{min}$ which yields the minimum value of
+$d(\lambda)$ will also determine the height $z(\lambda_{min})$ of the
+output ground point, and then $\lambda_{min}$ can be used to
+interpolate the intersection set
+$(x^i(\lambda_{min}),y^i(\lambda_{min}))$, of which the mean
+$(\bar{x}(\lambda_{min}),\bar{y}(\lambda_{min}))$ constitutes the
+horizontal component of the output ground point.
+
+\subsection{Empirical Equivalence with MIG}
+For every MIG calculation that went into Figures
+\ref{fig:vanillaref}--\ref{fig:pred_meas_sqrtn}, an Hourglass geolocation
+calculation was also performed. Figure \ref{fig:mig_vs_hourglass} shows the
+actual errors in the X, Y, and Z directions from a MIG calculation (horizontal
+axis) versus an Hourglass calculation (vertical axis), for all of those
+calculations. (Every point in Figure \ref{fig:vanillaxyz} corresponds with
+$k=100$ points in Figure \ref{fig:mig_vs_hourglass}.) The scatter follows the
+unity line $y=x$ very closely, showing that Hourglassing yields very closely the
+same geolocation as MIG. (TBD: restricted graph for N>10 or N>20, showing
+outliers are gone?)
+
+\begin{figure}
+\includegraphics[width=\textwidth]{fig_mig_ply_xyz_sma.png}
+\includegraphics[width=\textwidth]{fig_mig_ply_xyz_big.png}
+\caption{\label{fig:mig_vs_hourglass}MIG vs Hourglass errors.  Above for $N\le
+  10$, below for $N>10$. Each triplet is one graph each for X, Y, and Z errors.}
+\end{figure}
+
+
+\subsection{Non-uniqueness}
+It is desirable that this quartic polynomial $d(\lambda)$ have no
+local minima, but only a single, global minimum. Equivalently, the
+cubic derivative should have a single real root and two complex
+roots. Unfortunately, there can be degenerate arrangements of image
+rays with three real roots of $d'(\lambda$ and multiple minima for
+$d(\lambda)$.
+
+Consider the bimodal situation depicted in Fig. \ref{bimodal_bundle}:
+images of the ground point are captured from satellite positions
+spaced equally around a horizontal circle, with orientations perfectly
+intersecting at a ground point at height $z_+$. To this bundle add a
+duplicate bundle, shifted both horizontally and downwards, to
+intersect at a lower height $z_-$. Clearly, the spread of the joint
+bundle at heights $z(\lambda=0)=z_-$ and $z(\lambda=1)=z_+$ are the
+same. And the spread at $z(\lambda=1/2)$ is somewhat larger (note that
+the shape of $d(\lambda)$ is depicted sideways to the right). Thus
+$\lambda={0,1}$ present two minima of $d(\lambda)$, and the
+hourglassing procedure in this case cannot provide a clear answer.
+
+At least we can compute the exact form of $d(\lambda)$, and with
+standard techniques understand clearly whether such a degenerate
+situation were ever to present itself. (TBD: In our empirical testing
+in section \ref{simulation}, we [never/seldom] encountered such a
+degenerate case, in NNNN hourglassing computations involving from 4 to
+1000 images.)
+
+
+\subsection{Error Estimation}
+Review of Figures \ref{fig:vanilla_erad_log}--\ref{fig:pred_meas_sqrtn_fpc}
+suggests an empirical method of error estimation for Hourglassing. The predicted
+error curve in Figure \ref{fig:vanilla_erad_log} decreases very predictably as
+$1/\sqrt N$ (as demonstrated by Figure \ref{fig:vanilla_erad_sqrtn}). So an
+alternative method for estimating the error of a MIG with $N$ images would be to
+subsample $M<<N$ images many times, compute the sample covariance $C_M$ of the
+$M$-MIGs, and because of the $1/\sqrt N$ behavior (which is $1/N$ in variance
+space), predict the error of the $N$-MIG to be $$C_N=\frac{C_M}{N/M}$$.
+
+This allows estimation of error apart from the output covariance of the $N$-MIG
+(or even of any of the $M$-MIG). There's not much point to this for MIG, since
+output covariance is a natural by-product of the MIG algorithm. But for
+Hourglassing, this provides a method of error estimation which requires no error
+information for the bundle, simply calculation of additional, smaller Hourglass
+calculations on many subamples, and computation and scaling of the sample
+covariance of the resulting set of geolocations.
+
+The fundamental principle behind this error estimation technique, is that
+apriori error information is not needed for each image in the bundle, because
+the bundle {\em is} the distribution of error. For typical collections of only 2
+or 4 images, the sample size is too small to reliably know whether the ray
+separation is a true representation of the amount of error in the system, or
+whether it may be concidentally large (or small). Thus a traditional MIG with
+apriori and aposteriori covariance, and reference variance as a consistency
+check, is most appropriate. But for large enough collections of images, the
+distribution of image rays is a reliable summary of the error of the process.
+
+\subsection{Error Estimation Simulated Results}
+To evaluate this empirical method of error estimation for Hourglassing, a subset
+of $N=100$ images from $\Pimg$ were chosen, and an Hourglass-geolocation
+computed for them. Subsets of $M\in\{25,50,75\}$ were sampled from the $N$-set,
+$k\in\{100,200,400\}$ times, and an Hourglass-geolocation is computed for each
+$M$-subset. 3x3 sample covariance was computed for those $k$ ground points, and
+then scaled by $1/(N/M)=M/N$ because of the $1/\sqrt{N}$ effect, and corrected
+also by a FPC factor of $(N-1)/(N-M)$, to yield the covariance estimate for the
+$N$-Hourglass. A MIG was also computed for the same $N$-subset, and its output
+covariance computed for reference. This experiment was repeated $R=100$ times.
+
+Figure \ref{fig:mig_vs_hourglass_varx} shows the variance of X from MIG vs
+Hourglass error estimation. The Hourglass error estimation has more spread than MIG.
+
+\begin{figure}
+TBD
+\caption{\label{fig:mig_vs_hourglass_varx}MIG vs Hourglass error estimation varx vs varx}
+\end{figure}
+
+
+
+
+
+
+
+\begin{thebibliography}{9} % so far, only 1-digit reference nums
+
+\bibitem{MIN}Dolloff, John, and Reuben Settergren, ``Worldview-1 Stereo
+  Extraction Accuracy With and Without MIN Processing.'' ASPRS 2010.
+
+\bibitem{LLN}Law of large numbers citation, my stats book on the shelf at work
+
+\bibitem{FPC}Finite Population Correction reference, look up something
+
+\bibitem{LSQRMIG}Mikhail/Bethel/McGlone? Manual of Photogrammetry?
+
+\end{thebibliography}
+ 
+\end{document}
