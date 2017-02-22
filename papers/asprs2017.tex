@@ -264,7 +264,7 @@ horizontal component of the output ground point.
 
 \subsection{Empirical Equivalence with MIG}
 For every MIG calculation that went into Figures
-\ref{fig:vanillaref}--\ref{fig:pred_meas_sqrtn}, an Hourglass geolocation
+\ref{fig:vanillaref}--\ref{fig:vanilla_pred_meas_sqrtn}, an Hourglass geolocation
 calculation was also performed. Figure \ref{fig:mig_vs_hourglass} shows the
 actual errors in the X, Y, and Z directions from a MIG calculation (horizontal
 axis) versus an Hourglass calculation (vertical axis), for all of those
@@ -311,14 +311,13 @@ degenerate case, in NNNN hourglassing computations involving from 4 to
 
 
 \subsection{Error Estimation}
-Review of Figures \ref{fig:vanilla_erad_log}--\ref{fig:pred_meas_sqrtn_fpc}
-suggests an empirical method of error estimation for Hourglassing. The predicted
-error curve in Figure \ref{fig:vanilla_erad_log} decreases very predictably as
-$1/\sqrt N$ (as demonstrated by Figure \ref{fig:vanilla_erad_sqrtn}). So an
-alternative method for estimating the error of a MIG with $N$ images would be to
-subsample $M<<N$ images many times, compute the sample covariance $C_M$ of the
-$M$-MIGs, and because of the $1/\sqrt N$ behavior (which is $1/N$ in variance
-space), predict the error of the $N$-MIG to be $$C_N=\frac{C_M}{N/M}$$.
+Review of Figures \ref{fig:vanilla_pred_meas}--\ref{fig:vanilla_pred_meas_sqrtn}
+suggests an empirical method of error estimation for Hourglassing. Predicted
+error decreases very predictably as $1/\sqrt N$. So an alternative method for
+estimating the error of a MIG with $N$ images would be to subsample $M<<N$
+images many times, compute the sample covariance $C_M$ of the $M$-MIGs, and
+because of the $1/\sqrt N$ behavior (which is $1/N$ in variance space), predict
+the error of the $N$-MIG to be $$C_N=\frac{C_M}{N/M}$$.
 
 This allows estimation of error apart from the output covariance of the $N$-MIG
 (or even of any of the $M$-MIG). There's not much point to this for MIG, since
@@ -349,15 +348,17 @@ also by a FPC factor of $(N-1)/(N-M)$, to yield the covariance estimate for the
 $N$-Hourglass. A MIG was also computed for the same $N$-subset, and its output
 covariance computed for reference. This experiment was repeated $R=100$ times.
 
-Figure \ref{fig:mig_vs_hourglass_varx} shows the variance of X from MIG vs
+Figure \ref{fig:mig_vs_hourglass_var} shows the variance of X from MIG vs
 Hourglass error estimation. The Hourglass error estimation has more spread than MIG.
 
 \begin{figure}
-TBD
-\caption{\label{fig:mig_vs_hourglass_varx}MIG vs Hourglass error estimation varx vs varx}
+\includegraphics[width=\textwidth]{fig_self_var_xy.png}
+\includegraphics[width=\textwidth]{fig_self_var_z.png}
+\caption{\label{fig:mig_vs_hourglass_var}MIG vs Hourglass estimated variances}
 \end{figure}
 
-
+\section{Conclusion}
+In conclusion, we conclude.
 
 
 
