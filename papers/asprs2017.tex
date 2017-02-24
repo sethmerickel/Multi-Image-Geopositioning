@@ -1,4 +1,4 @@
-\documentclass{amsart}
+\documentclass[11pt]{amsart}
 %\documentclass{article}
 %\usepackage{amsmath}
 \usepackage{graphicx} % for png figures
@@ -8,127 +8,172 @@
 \newcommand{\Iimg}{\mathcal{I}}
 \newcommand{\Pimg}{\mathcal{P}}
 
-\title{Hourglassin'}
-\author{Rube}
-\author{Seth}
+\title[Small Geopositioning Error from Many Images]
+{Asymptotically Small Geopositioning Error from Large Sets of Imagery}
+\author[Settergren]{Reuben Settergren}
+\email{rjs@jhu.edu}
+\author[Merickel]{Seth Merickel}
+\email{sethmerickel@gmail.com}
+
 \begin{abstract}
-Abstract goes here
+The geolocation error resulting from least-squares Multi-Image Geopositioning
+(MIG) with $N$ images is shown theoretically and empirically to decrease as
+$1/\sqrt{N}$, using a synthetically augmented set of 1000 overlapping
+Worldview-1 images. A novel heuristic approach called ``Hourglassing'' is
+introduced, which requires no understanding of apriori covariance, but
+implicitly infers uncertainty from the distribution of the ray bundle
+itself. Hourglassing geolocation and error estimation is compared to MIG using
+the 1000-image testbed.
 \end{abstract}
 \maketitle
 
 \section{Introduction}
-We be MIG'n and hourglassin'.
+Least-squares Multi-Image Geopositioning (hereafter MIG) is well-under\-stood in
+photogrammetry\cite{LSQRMIG}, providing geolocation and output covariance that
+are as accurate as the apriori projection and covariance data that are input
+into the process. However, for practical reasons, the number of images that have
+been used in MIG calculations have been rather small. Even after the advent of
+computing enabled the automatic processing of many images, there still remained
+the practical problem of {\em having} very many images that observed the same
+ground feature (as well as meaningful apriori covariance models). A typical
+airborne collection with a mapping camera and 60/40 forward/side-lap
+configuration would yield at most 6 views. A collection with large satellite
+images is usually designed to have minimally sufficient overlap, yielding only
+1- or 2-deep coverage almost everywhere (depending on a mono or stereo collect),
+with imagery being 2- or 4-deep at the overlaps only to ensure there are no gaps.
 
-\section{Least-Squares Multi-Image Geopositioning With Many Images}
+Some authors have applied MIG with more extensive collections of imagery. In
+\cite{JEONG_SIX}, Jeong, Yang, and Kim analyze MIG with one pair of imagery from
+each of three different satellites: IKONOS, QuickBird, and KOMPSAT-2. In
+\cite{PLANE_COLLINS}, R.~T.~Collins geopositions with 7 images simultaneously
+(although not with MIG, but a technique called ``Space-Sweep'' -- which is
+similar to the Hourglassing method introduced in section \ref{hourglassing}).
+In \cite{LRO_NINE}, a team from the Chinese Academy of Sciences investigates MIG
+accuracy with 2--9 images of the moon from the Lunar Reconnaissance
+Orbiter. Wonnacott \cite{WONNACOT_32_3} analyzes MIG accuracy with SAR, using 32
+image ``sets'' (each set being a ``three-aperture path sequence'').
+
+These image collections, however, represent only a fraction of what is currently
+possible, given the ubiquity of high-resolution commercial satellite imaging
+from companies like Digital Globe, Airbus, SPOT, Pl\'eiades, KOMPSAT,
+COSMO-SkyMed, TerraSAR-X, etc. A search of the Digital Globe online imagery
+catalog \cite{BROWSE_DG} reveals well over 100 images for many large cities. And
+the current wave of SmallSat flocks (Planet Labs, RapidEye, etc.) with their
+rapid revisit times, promise to provide floods of repeat imagery. Although
+SmallSats may be inferior in resolution and accuracy at the moment, technology
+will improve, and it is the goal of this paper to show that these deficiencies
+can be overcome by the power of large amounts of statistically independent
+information from huge numbers of images.
+
+\section{Least-Squares MIG With Many Images}
 \subsection{MIG}\label{MIG}
-Use least-squares to show
-$\lim_{n\rightarrow\inf}err=0$.
+TBD: Use least-squares to show $\lim_{n\rightarrow\inf}err=0$.
 
 \subsection{Simulation with Synthetic Imagery}
-In this section we develop a large simulated testbed, and evaluate Least-squares
-MIG with various experimental measures for estimated error, on samples of
+In this section we construct a large testbed of simulated/synthetic imagery, and
+evaluate the accuracy of MIG geolocation and error estimation, on samples of
 randomly-selected subsets of images, of size ranging from 4 to 1000.
 
-To develop the test set, we start with a large as possible set of real,
-unadjusted sensor models which have common overlap. From \cite{MIN} we have 10
-Worldview-1 sensor models which all view the ground location 36N 117.5W 1700mHAE
-(WGS84). This point is set as Ground Truth.
-
-We then extend the set of real sensor models by random perturbation. We
-repeatedly add random amounts of correction to position and orientation
-adjustable parameters. The random corrections are sampled from uniform
-distributions with bounds many times the nominal triangulation defaults, with
-the aim of spreading the simulated sensors as uniformly as possible, minimizing
-clustering around the original sensor models. (See resulting clustering in Fig
-\ref{clusterfig}). Most large random perturbations of this kind will steer the
-real sensor models away from viewing our truth point. Sensor models that still
-contain the truth point within their image bounds are retained, until we have 99
-perturbations for each original, real sensor model, for a total of 1000 sensor
-models.
+To develop the test set, we start with a large as possible set of real sensor
+models which have common overlap. (Note ``sensor models'', not ``images.'' For
+this simulated experiment, no pixels are needed, only sensor models. Actual
+scene content is irrelevant.)  From \cite{MIN} we have sensor models from 10
+Worldview-1 images which all view the ground location 36N 117.5W 1700mHAE
+(WGS84). This point is set as Ground Truth. (The sensor model used in this study
+is the SOCET GXP \cite{SGXP} Worldview sensor model.) We then synthetically
+extend the set of real sensor models by randomly perturbation position and
+orientation adjustable parameters with very large corrections. Using this random
+perturbation technique, we generate 99 perturbations for each of the 10
+originals, for a total of 1000 sensor models.
 
 The simulated set of 1000 images thus constructed is considered the Truth set of
-sensor models, with position and orientation parameters that perfectly represent
-conditions at image collection, to which actual sensor models would be imperfect
-estimates. The sensor model's ground to image function is used to project the
-truth point into image coordinates for each sensor model. These image
-measurements are retained as truth as well. The ray bundle emanating from these
-truth image points intersect perfectly (to within computational precision of the
-image to ground function) at the truth point in ground space. Thus MIG would
-yield the truth ground point, for 1000 images or for any subset. Call this
-idealized set of images $\Iimg$.
+sensor models. The sensor model's ground to image function is used to project
+the truth point into image coordinates for each sensor model. These image
+measurements are retained as truth also, and used for all the following
+experimental ray-intersections. The ray bundle emanating from these truth image
+points intersect perfectly (to within computational precision of the image to
+ground function) at the truth point in ground space. Let this idealized set of
+images and measurements be $\Iimg$.
 
-Once $\Iimg$ is assembled, experiments can be conducted by adding a controlled
-amount of error (randomly sampled from a known distribution) to each sensor
-model. The 1000 sensor models thus perturbed represent a possible realization of
-1000 images with position and orientation parameters being different from their
-actual truth. The idealized image measurements can be used (because that is
-where the visualization of the ground feature actually appears), a controlled
-amount of error can be added in image space (to represent a desired amount of
-image measurement error, or unmodeled sensor error). Using perturbed image
-measurements/sensor models, the resulting ray bundle will represent a realistic
-spread of image rays around the truth point, to which MIG and Hourglassing
-algorithms can be applied and evaluated. This procedure can be carried out for
-any subset of $N$ images, in fact for any number of $N$-image samples.
+Once the ideal bundle $\Iimg$ is assembled, an image bundle with realistic
+errors can be constructed by perturbing sensor models from $\Iimg$ with a
+controlled amount of error (randomly sampled from a known distribution), to
+obtain perturbed image set $\Pimg$. In \cite{MIN}, the error model for the SOCET
+GXP Worldview sensor model is tuned to ground truth, and adjusts 6 parameters: 3
+attitude parameters at $\sigma=5\mu$rad, and 3 attitude rate parameters at
+$\sigma=0.5\mu$rad/s, which yields an error of about CE90=??. For this study we
+use the same sensor model, but adopt a significantly larger error model, adding
+3 second-order attiude errors at $\sigma=0.05\mu\mathrm{rad}^2/\mathrm{s}^2$,
+and 9 position/velocity/ac\-cel\-eration errors with $\sigma = 1{\mathrm m},$
+$0.1{\mathrm m}/{\mathrm s},$ $0.01{\mathrm m}^2/{\mathrm s}^2$. (This model
+yields about CE90=??? of error per image). Any subset of images of $\Pimg$
+(along with the truth measurements on those images) can be used as a realistic
+input to least-squares MIG. Apriori covariance input to the MIG is the same
+error model that was used to perturb $\Iimg$ into $\Pimg$.
 
-Let $\Pimg$ be the set of 1000 perturbed images. In this experiment, for each
-$N\in{4,5,...100,105,110,...995,1000}$, subsets of $N$ images are sampled from
-the $\Pimg$ perturbed images $k=100$ times (except for $N=1000$, where the
-entire set is used only $k=1$ times). MIG is used to estimate the geolocation of
-the point using the $N$-image subset. Because we know the truth ground point,
-the trivial intersection of $\Iimg$, we can compute the actual error of each of
-these MIGs.
+Let $\Pimg$ be the set of 1000 perturbed images. For each
+$N\in\{4,5,...$ $100,105,...995\}$, we randomly sample $k=100$ subsets of size
+$N$ images from $\Pimg$. Least-squares MIG is used to estimate the geolocation
+of the truth point using each $N$-image subset. Because we know the truth ground
+point, the trivial intersection of $\Iimg$, we can compute the actual error of
+each of these MIGs, and observe the distribution of error as $N$ increases.
 
 Figure \ref{fig:vanillaref} shows the reference variances of every MIG from this
 experiment. Reference variance is tightly clustered around 1, which demonstrates
 that the use of apriori covariance in the MIG calculations is consistent with
 the errors involved in the perturbation of $\Pimg$.
 
-Figure \ref{fig:vanillaxyz} shows the average of errors in the X, Y, and Z
+Figure \ref{fig:vanillaxyz} shows the average of MIG errors in the X, Y, and Z
 dimensions. Each point represents an average over $k=100$ MIGS. Because errors
-in positive and negative directions cancel each other out in these averages,
-this graph shows the amount of bias in the MIG calculations across
-$N$-subsets. For the full set $\Pimg$ ($N=1000$), $dX\approx 0$, $dY\approx
--3$cm, and $dZ\approx 5$cm. This is the overall error that perturbation
-introduced into $\Pimg$, and it is clear that the average MIG converges to this,
-showing that the MIG is not a biased estimate.
+in positive and negative directions cancel each other out, this graph shows the
+amount of bias in the MIG calculations across $N$-subsets. For all $N=1000$
+images of $\Pimg$, the MIG solution differs from ground truth by (-0.0049,
+-0.0330, 0.0378) meters. Horizontal lines at those values indicate that as
+$N\rightarrow 1000$, bias across the $k=100$ MIGs for each $N$ converges to that
+error inherent to $\Pimg$.
 
 To avoid positive and negative errors cancelling each other out, we switch to
-positive quantities. Figure \ref{fig:vanilla_pred_meas} shows the average
+positive quantities. Figure \ref{fig:vanilla_pred_meas}a shows the average
 predicted and measured CE90/LE90 for each $N$ across the $k=100$ MIGs for that
 $N$. To clarify the rate of convergence and separation of the curves, a
 logarithmic scale is used. (The measured errors are adjusted with a finite
-population correction of $\sqrt{(1000-N)/(1000-1)}$.)
+population correction of $\sqrt{(1000-N)/(1000-1)}$. The deviation of the
+measured errors from prediction near 1000 is believed to be due to limitations
+of the finite population correction when applied to a 90\% statistic rather than
+a 1-sigma standard devation.)
 
-Figure \ref{fig:vanilla_pred_meas_sqrtn} multiplies each point from Figure
-\ref{fig:vanilla_pred_meas} by a factor of $\sqrt N$. The flatness of these
+In order to demosntrate the $1/\sqrt{N}$ behavior of MIG error, Figure
+\ref{fig:vanilla_pred_meas}a scales each point from Figure
+\ref{fig:vanilla_pred_meas}b by a factor of $\sqrt N$. The flatness of these
 curves demonstrates the thesis of this paper, that MIG follows the Law of Large
-Numbers, and exhibits error that decreases as $1/\sqrt N$. (The upturn of
-measured error near $N=1000$ is a result of the limitations of the finite
-population correction near the total finite population.)
+Numbers, and exhibits error that decreases as $1/\sqrt N$.
 
 
 \begin{figure}
 \includegraphics[width=\textwidth]{fig_refvar.png}
-\caption{\label{fig:vanillaref}All reference variances}
+\caption{\label{fig:vanillaref}All reference variances. For every $N$, each of
+  the $k=100$ MIG generates one pixel in the graph.}
 \end{figure}
 
 \begin{figure}
 \includegraphics[width=\textwidth]{fig_avgxyz.png}
-\caption{\label{fig:vanillaxyz}Average Errors in X, Y, and Z}
+\caption{\label{fig:vanillaxyz}Average Errors in X, Y, and Z. The horizontal
+  lines represent the MIG solution for all $N=1000$ images of $\Pimg$: (-0.0049,
+  -0.0330, 0.0378), to which the subset MIGs converge.}
 \end{figure}
 
 \begin{figure}
 \includegraphics[width=\textwidth]{fig_pred_meas.png}
-\caption{\label{fig:vanilla_pred_meas}Pred/Meas CE90/LE90 (log scale)}
-\end{figure}
-
-\begin{figure}
 \includegraphics[width=\textwidth]{fig_pred_meas_sqrtn.png}
-\caption{\label{fig:vanilla_pred_meas_sqrtn}Pred/Meas CE90/LE90, multiplied by $\sqrt N$}
+\caption{\label{fig:vanilla_pred_meas}Predicted vs measured CE90/LE90. (a) above
+  provides actual values (in logarithmic scale); (b) below includes a
+  multiplicative factor of $\sqrt{N}$ to demonstrate that (a) decreases as
+  $1/\sqrt{N}$. In both cases, the measured values are adjusted with a finite
+  population correction.}
 \end{figure}
 
 
-\section{Hourglassin'}
+\section{Hourglassing\label{hourglassing}}
 \subsection{Motivation}
 Because available sensor models (such as RPC) often lack a meaningful
 error model to input to MIG, and for computational simplicity, we
@@ -197,8 +242,10 @@ covariance matrix
 \end{bmatrix}
 \]
 
-It can be shown that the covariance of the interpolalated points
-$(x^i(\lambda),y^i(\lambda))$ can be expressed in terms of variances of and covariances between the four elementary datasets $x^i_+, x^i_-, y^i_+, y^i_-$ as follows:
+It can be shown that the covariance of the interpolated points
+$(x^i(\lambda), y^i(\lambda))$ can be expressed in terms of variances of and
+covariances between the four elementary datasets $x^i_+, x^i_-, y^i_+, y^i_-$ as
+follows:
 
 \begin{equation}\label{varx}
 var(x^i(\lambda)) = \lambda^2\sigma^2_{x+x+} + \lambda(1-\lambda)(\sigma^2_{x+x-} + \sigma^2_{x-x+}) 
@@ -264,7 +311,7 @@ horizontal component of the output ground point.
 
 \subsection{Empirical Equivalence with MIG}
 For every MIG calculation that went into Figures
-\ref{fig:vanillaref}--\ref{fig:vanilla_pred_meas_sqrtn}, an Hourglass geolocation
+\ref{fig:vanillaref}--\ref{fig:vanilla_pred_meas}, an Hourglass geolocation
 calculation was also performed. Figure \ref{fig:mig_vs_hourglass} shows the
 actual errors in the X, Y, and Z directions from a MIG calculation (horizontal
 axis) versus an Hourglass calculation (vertical axis), for all of those
@@ -277,8 +324,10 @@ outliers are gone?)
 \begin{figure}
 \includegraphics[width=\textwidth]{fig_mig_ply_xyz_sma.png}
 \includegraphics[width=\textwidth]{fig_mig_ply_xyz_big.png}
-\caption{\label{fig:mig_vs_hourglass}MIG vs Hourglass errors.  Above for $N\le
-  10$, below for $N>10$. Each triplet is one graph each for X, Y, and Z errors.}
+\caption{\label{fig:mig_vs_hourglass}MIG vs Hourglass errors.  Each triplet is
+  one graph each for X, Y, and Z errors. Above, 700 points are plotted from
+  intersections with $4\le N\le 100$. Below, 26900 points are plotted for
+  $10<N<1000$.}
 \end{figure}
 
 
@@ -305,19 +354,19 @@ hourglassing procedure in this case cannot provide a clear answer.
 At least we can compute the exact form of $d(\lambda)$, and with
 standard techniques understand clearly whether such a degenerate
 situation were ever to present itself. (TBD: In our empirical testing
-in section \ref{simulation}, we [never/seldom] encountered such a
+in section \ref{hsimulation}, we [never/seldom] encountered such a
 degenerate case, in NNNN hourglassing computations involving from 4 to
 1000 images.)
 
 
 \subsection{Error Estimation}
-Review of Figures \ref{fig:vanilla_pred_meas}--\ref{fig:vanilla_pred_meas_sqrtn}
-suggests an empirical method of error estimation for Hourglassing. Predicted
+Review of Figures \ref{fig:vanilla_pred_meas}--\ref{fig:vanilla_pred_meas}
+suggests an empirical meth\-od of error estimation for Hourglassing. Predicted
 error decreases very predictably as $1/\sqrt N$. So an alternative method for
 estimating the error of a MIG with $N$ images would be to subsample $M<<N$
 images many times, compute the sample covariance $C_M$ of the $M$-MIGs, and
 because of the $1/\sqrt N$ behavior (which is $1/N$ in variance space), predict
-the error of the $N$-MIG to be $$C_N=\frac{C_M}{N/M}$$.
+the error of the $N$-MIG to be $$C_N=\frac{C_M}{N/M}$$
 
 This allows estimation of error apart from the output covariance of the $N$-MIG
 (or even of any of the $M$-MIG). There's not much point to this for MIG, since
@@ -337,7 +386,7 @@ apriori and aposteriori covariance, and reference variance as a consistency
 check, is most appropriate. But for large enough collections of images, the
 distribution of image rays is a reliable summary of the error of the process.
 
-\subsection{Error Estimation Simulated Results}
+\subsection{\label{hsimulation}Error Estimation Simulated Results}
 To evaluate this empirical method of error estimation for Hourglassing, a subset
 of $N=100$ images from $\Pimg$ were chosen, and an Hourglass-geolocation
 computed for them. Subsets of $M\in\{25,50,75\}$ were sampled from the $N$-set,
@@ -354,7 +403,9 @@ Hourglass error estimation. The Hourglass error estimation has more spread than 
 \begin{figure}
 \includegraphics[width=\textwidth]{fig_self_var_xy.png}
 \includegraphics[width=\textwidth]{fig_self_var_z.png}
-\caption{\label{fig:mig_vs_hourglass_var}MIG vs Hourglass estimated variances}
+\caption{\label{fig:mig_vs_hourglass_var}MIG vs Hourglass estimated
+  variances. From left to right, the clusters represent $N=$400, 200 and 100
+  images.}
 \end{figure}
 
 \section{Conclusion}
@@ -366,14 +417,40 @@ In conclusion, we conclude.
 
 \begin{thebibliography}{9} % so far, only 1-digit reference nums
 
+\bibitem{PLANE_SWEEP}Reference from Joe about ``plane-sweep stereo''
+
+\bibitem{PLANE_COLLINS}Collins, R.~T., ``A space-sweep approach to true
+  multi-image matching.'' Computer Vision and Pattern Recognition, 1996.
+% https://www.ri.cmu.edu/pub_files/pub1/collins_robert_1996_1/collins_robert_1996_1.pdf
+
+\bibitem{LRO_NINE}Di, K., B.~Xu, B.~Liu, M.~Jia, Z.~Liu, ``Geopositioning
+  precision analysis of multiple image triangulation using LRO NAC Lunar
+  Images.'' ISPRS, 2016.
+% http://www.int-arch-photogramm-remote-sens-spatial-inf-sci.net/XLI-B4/369/2016/isprs-archives-XLI-B4-369-2016.pdf
+
+\bibitem{BROWSE_DG}Digital Globe Image Finder, {\tt
+  http://browse.digitalglobe.com}, accessed 2017-02-24.
+
 \bibitem{MIN}Dolloff, John, and Reuben Settergren, ``Worldview-1 Stereo
   Extraction Accuracy With and Without MIN Processing.'' ASPRS 2010.
+
+\bibitem{JEONG_SIX}Jeong, Jaehoon, Chansu Yang, Taejung Kim, ``Geo-positioning
+  accuracy using multiple-satellite images: IKONOS, QuickBird, and KOMPSAT-2
+  Stereo Images.'' {\em Remote Sensing} 7(4), 2015, pp.~4549-64.
+% http://www.mdpi.com/2072-4292/7/4/4549
+
+\bibitem{LSQRMIG}Mikhail/Bethel/McGlone? Manual of Photogrammetry?
+
+\bibitem{SGXP}SOCET GXP, {\tt http://geospatialexploitationproducts.com}
+
+\bibitem{WONNACOT_32_3}Wonnacot, W.~M., {\em Geolocation with Error Analysis
+  Using Imagery from an Experimental Spotlight SAR}. PhD Thesis, Purdue, 2008.
+% 32 SAR image ``sets'', each a ``three-aperture path sequence''
 
 \bibitem{LLN}Law of large numbers citation, my stats book on the shelf at work
 
 \bibitem{FPC}Finite Population Correction reference, look up something
 
-\bibitem{LSQRMIG}Mikhail/Bethel/McGlone? Manual of Photogrammetry?
 
 \end{thebibliography}
  

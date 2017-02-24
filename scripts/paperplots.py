@@ -73,6 +73,7 @@ plt.interactive(False)
 
 pltno += 1
 plt.figure(pltno)
+plt.gcf().set_size_inches(8,4)
 plt.xlabel('Number of images')
 plt.ylabel('meters')
 plt.axes().set_ylim([-.3, .3])
@@ -83,18 +84,19 @@ plt.legend(numpoints=1)
 plt.plot([0,1000], [mx,mx], 'k-',
          [0,1000], [my,my], 'k-',
          [0,1000], [mz,mz], 'k-')
-plt.savefig('../papers/fig_avgxyz.png')
+plt.savefig('../papers/fig_avgxyz.png', bbox_inches='tight')
 
 pltno += 1
 plt.figure(pltno)
 plt.axes().set_aspect(80)
 plt.axes().tick_params(left='off')
 plt.plot(allns, allrefs, 'k,', label='Each pixel is one refvar')
-plt.legend(numpoints=1)
-plt.savefig('../papers/fig_refvar.png')
+#plt.legend(numpoints=1)
+plt.savefig('../papers/fig_refvar.png', bbox_inches='tight')
 
 pltno += 1
 plt.figure(pltno)
+plt.gcf().set_size_inches(8,4)
 plt.ylabel('meters')
 plt.gca().set_yscale('log')
 plt.plot(ns, pce90s, 'k+', label='Pred CE90')
@@ -102,10 +104,11 @@ plt.plot(ns, ple90s, 'kx', label='Pred LE90')
 plt.plot(ns, mce90s, 'k>', label='Meas LE90*FPC', fillstyle='none')
 plt.plot(ns, mle90s, 'kD', label='Meas LE90*FPC', fillstyle='none')
 plt.legend(numpoints=1)
-plt.savefig('../papers/fig_pred_meas.png')
+plt.savefig('../papers/fig_pred_meas.png', bbox_inches='tight')
 
 pltno += 1
 plt.figure(pltno)
+plt.gcf().set_size_inches(8,4)
 plt.axes().set_yticklabels([])
 plt.axes().tick_params(left='off')
 plt.axes().set_ylim([5, 15])
@@ -114,40 +117,46 @@ plt.plot(ns, ple90s_scl, 'kx', label='Pred LE90*sqrtN')
 plt.plot(ns, mce90s_scl, 'k>', label='Meas CE90*sqrtN*FPC', fillstyle='none')
 plt.plot(ns, mle90s_scl, 'kD', label='Meas CE90*sqrtN*FPC', fillstyle='none')
 plt.legend(numpoints=1, loc='upper center')
-plt.savefig('../papers/fig_pred_meas_sqrtn.png')
+plt.savefig('../papers/fig_pred_meas_sqrtn.png', bbox_inches='tight')
 
 pltno += 1; 
-plt.figure(pltno); 
-plt.axes().set_aspect('equal')
-plt.xlabel('meters')
-plt.ylabel('meters')
-plt.title('MIG vs Hourglass for N=4..10')
+plt.figure(pltno)
+plt.gcf().set_dpi(160)
+plt.gcf().set_size_inches(8,2.5)
 lim=15
 p=plt.subplot(131); p.set_xlim(-lim,lim); p.set_ylim(-lim,lim)
 p.plot(smamxs, smapxs, 'ko', [-20,20], [-20,20], 'k-', markersize=2)
+plt.xticks([-15,-5,0,5,15])
+
 p=plt.subplot(132); p.set_xlim(-lim,lim); p.set_ylim(-lim,lim)
 p.plot(smamys, smapys, 'ko', [-20,20], [-20,20], 'k-', markersize=2)
+plt.xticks([-15,-5,0,5,15])
+
 lim=20
 p=plt.subplot(133); p.set_xlim(-lim,lim); p.set_ylim(-lim,lim)
 p.plot(smamzs, smapzs, 'ko', [-20,20], [-20,20], 'k-', markersize=2)
-plt.savefig('../papers/fig_mig_ply_xyz_sma.png')
+plt.xticks([-20,-10,0,10,20])
+plt.savefig('../papers/fig_mig_ply_xyz_sma.png', bbox_inches='tight')
 
 pltno += 1; 
 plt.figure(pltno); 
-plt.axes().set_aspect('equal')
-plt.xlabel('meters')
-plt.ylabel('meters')
-plt.title('MIG vs Hourglass for N>10')
+plt.gcf().set_dpi(160)
+plt.gcf().set_size_inches(8,2.5)
 lim=1.0
 p=plt.subplot(131); p.set_xlim(-lim,lim); p.set_ylim(-lim,lim)
 p.plot(bigmxs, bigpxs, 'k,', [-20,20], [-20,20], 'k-')
+#plt.xticks([-15,-5,0,5,15])
 p=plt.subplot(132); p.set_xlim(-lim,lim); p.set_ylim(-lim,lim)
 p.plot(bigmys, bigpys, 'k,', [-20,20], [-20,20], 'k-')
+#plt.xticks([-15,-5,0,5,15])
+
 lim=2.0
 p=plt.subplot(133); p.set_xlim(-lim,lim); p.set_ylim(-lim,lim)
 p.plot(bigmzs, bigpzs, 'k,', [-20,20], [-20,20], 'k-')
-plt.savefig('../papers/fig_mig_ply_xyz_big.png')
+plt.gcf().set_size_inches(8,2.5)
+plt.xticks([-2,-1,0,1,2])
+plt.savefig('../papers/fig_mig_ply_xyz_big.png', bbox_inches='tight')
 
 
-plt.show()
+#plt.show()
 
