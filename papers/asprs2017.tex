@@ -4,21 +4,48 @@
 %\usepackage{amsmath}
 \usepackage{graphicx} % for png figures
 \usepackage{subcaption} % for subfigures
+\usepackage{amsaddr} % addresses up front
+\pagenumbering{gobble} % no page numbers
+
 
 \begin{document}
 
 \newcommand{\Iimg}{\mathcal{I}}
 \newcommand{\Pimg}{\mathcal{P}}
 
-\title[Small Geopositioning Error from Many Images]
-{Asymptotically Small Geopositioning Error from Large Sets of Imagery}
-\author[Settergren]{Reuben Settergren}
-\email{rjs@jhu.edu}
-\author[Merickel]{Seth Merickel}
-\email{sethmerickel@gmail.com}
+\title[Small Geopositioning Error from Many Images]{}
+%{Asymptotically Small Geopositioning Error from Large Sets of Imagery}
+\author[Settergren]{}%{\bf \rm{Reuben Settergren}}
+\author[Merickel]{}%{Seth Merickel}
+\maketitle
 
-\begin{abstract}
-The geolocation error resulting from least-squares Multi-Image Geopositioning
+
+\vskip -1.1in
+
+\begin{centering}
+{\large \bf ASYMPTOTICALLY SMALL GEOPOSITIONING ERROR \\ FROM LARGE SETS OF IMAGERY}
+
+\vspace \baselineskip
+
+{\bf Reuben Settergren}
+
+{\bf Seth Merickel}
+
+{\tt rjs@jhu.edu}
+
+{\tt sethmerickel@gmail.com}
+
+\end{centering}
+
+\vspace \baselineskip
+
+%\begin{abstract}
+%\begin{quotation}
+
+{\noindent \large \bf ABSTRACT}
+\vspace \baselineskip
+
+\noindent The geolocation error resulting from least-squares Multi-Image Geopositioning
 (MIG) with $N$ images is shown theoretically and empirically to decrease as
 $1/\sqrt{N}$, using a synthetically augmented set of 1000 overlapping
 Worldview-1 images. A novel heuristic approach called `Hourglassing' is
@@ -26,8 +53,8 @@ introduced, which requires no understanding of apriori covariance, but
 implicitly infers uncertainty from the distribution of the ray bundle
 itself. Hourglassing geolocation and error estimation is compared to MIG using
 the 1000-image testbed.
-\end{abstract}
-\maketitle
+%\end{quotation}
+%\end{abstract}
 
 \section{Introduction}
 Least-squares Multi-Image Geopositioning (hereafter MIG) is well-under\-stood in
@@ -72,7 +99,7 @@ information from huge numbers of images.
 TBD: Use least-squares to show $\lim_{n\rightarrow\inf}err=0$.
 
 \subsection{Simulation with Synthetic Imagery}
-In this section we construct a large testbed of simulated/synthetic imagery, and
+In this section we construct a large testbed of simulated/\-syn\-the\-tic imagery, and
 evaluate the accuracy of MIG geolocation and error estimation, on samples of
 randomly-selected subsets of images, of size ranging from 4 to 1000.
 
@@ -280,10 +307,10 @@ i.e. the square root of a quartic (4th degree) polynomial.
 
 We seek to minimize $a(\lambda)$, which is equivalent to minimizing
 the quartic polynomial 
-\begin{equation*}
-d(\lambda) = |M(\lambda)| \\
-           = var(x^i(\lambda))var(y^i(\lambda)) - covar(x^i(\lambda),y^i(\lambda))^2
-\end{equation*}
+\begin{eqnarray*}
+d(\lambda)&=&|M(\lambda)| \\
+          &=&var(x^i(\lambda))var(y^i(\lambda)) - covar(x^i(\lambda),y^i(\lambda))^2
+\end{eqnarray*}
 
 Note that, for efficient computation, the quadratic, linear, and
 constant coefficients of equations (\ref{varx}-\ref{covarxy}) can be
@@ -373,7 +400,7 @@ review.
 Review of Figures \ref{fig:vanilla_pred_meas}--\ref{fig:vanilla_pred_meas_sqrtn}
 suggests an empirical meth\-od of error estimation for Hourglassing. Predicted
 error decreases very predictably as $1/\sqrt N$. So an alternative method for
-estimating the error of a MIG with $N$ images would be to subsample $M<<N$
+estimating the error of a MIG with $N$ images would be to subsample $M \ll N$
 images many times, compute the sample covariance $C_M$ of the $M$-MIGs, and
 because of the $1/\sqrt N$ behavior (which is $1/N$ in variance space), and
 using a finite population correction, predict the error of the $N$-MIG to
@@ -433,39 +460,41 @@ In conclusion, we conclude.
 
 
 
-\begin{thebibliography}{9} % so far, only 1-digit reference nums
+\begin{thebibliography}{99} % 2-digit reference nums
 
-\bibitem{PLANE_SWEEP}Reference from Joe about ``plane-sweep stereo''
+\bibitem{LLN} Casella, George, Roger L. Berger, 1990. {\em Statistical
+  Inference}, Brooks/Cole, Belmont CA, pp. 214-20.
 
-\bibitem{PLANE_COLLINS}Collins, R.~T., ``A space-sweep approach to true
-  multi-image matching.'' Computer Vision and Pattern Recognition, 1996.
+\bibitem{PLANE_COLLINS}Collins, R.~T., 1996. A space-sweep approach to true
+  multi-image matching, In: {\em Proc. CVPR}, 1996.
 % https://www.ri.cmu.edu/pub_files/pub1/collins_robert_1996_1/collins_robert_1996_1.pdf
 
-\bibitem{LRO_NINE}Di, K., B.~Xu, B.~Liu, M.~Jia, Z.~Liu, ``Geopositioning
+\bibitem{LRO_NINE}Di, K., B.~Xu, B.~Liu, M.~Jia, Z.~Liu, 2016. Geopositioning
   precision analysis of multiple image triangulation using LRO NAC Lunar
-  Images.'' ISPRS, 2016.
+  Images, In: {\em Proc. ISPRS}, 2016.
 % http://www.int-arch-photogramm-remote-sens-spatial-inf-sci.net/XLI-B4/369/2016/isprs-archives-XLI-B4-369-2016.pdf
 
 \bibitem{BROWSE_DG}Digital Globe Image Finder, {\tt
   http://browse.digitalglobe.com}, accessed 2017-02-24.
 
-\bibitem{MIN}Dolloff, John, and Reuben Settergren, ``Worldview-1 Stereo
-  Extraction Accuracy With and Without MIN Processing.'' ASPRS 2010.
+\bibitem{MIN}Dolloff, John, and Reuben Settergren, 2010. Worldview-1 Stereo
+  Extraction Accuracy With and Without MIN Processing, In: {\em Proc. ASPRS}, 2010.
 
-\bibitem{JEONG_SIX}Jeong, Jaehoon, Chansu Yang, Taejung Kim, ``Geo-positioning
+\bibitem{JEONG_SIX}Jeong, Jaehoon, Chansu Yang, Taejung Kim, 2015. Geo-positioning
   accuracy using multiple-satellite images: IKONOS, QuickBird, and KOMPSAT-2
-  Stereo Images.'' {\em Remote Sensing} 7(4), 2015, pp.~4549-64.
+  Stereo Images, {\em Remote Sensing} 7(4), pp.~4549-64.
 % http://www.mdpi.com/2072-4292/7/4/4549
 
-\bibitem{LSQRMIG}Mikhail/Bethel/McGlone? Manual of Photogrammetry?
+\bibitem{LSQRMIG}Mikhail, Edward M., James S.~Bethel, J.~Chris McGlone,
+  2001. {\em Modern Photogrammetry}, Wiley, New York.
 
 \bibitem{SGXP}SOCET GXP, {\tt http://geospatialexploitationproducts.com}
 
-\bibitem{WONNACOT_32_3}Wonnacot, W.~M., {\em Geolocation with Error Analysis
-  Using Imagery from an Experimental Spotlight SAR}. PhD Thesis, Purdue, 2008.
+\bibitem{WONNACOT_32_3}Wonnacot, W.~M., 2008. {\em Geolocation with Error Analysis
+  Using Imagery from an Experimental Spotlight SAR}, PhD Thesis, Purdue.
 % 32 SAR image ``sets'', each a ``three-aperture path sequence''
 
-\bibitem{LLN}Law of large numbers citation, my stats book on the shelf at work
+\bibitem{PLANE_SWEEP}Reference from Joe about ``plane-sweep stereo''
 
 \bibitem{FPC}Finite Population Correction reference, look up something
 
