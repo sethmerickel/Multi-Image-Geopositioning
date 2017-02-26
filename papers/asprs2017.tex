@@ -127,18 +127,16 @@ images and measurements be $\Iimg$.
 Once the ideal bundle $\Iimg$ is assembled, an image bundle with realistic
 errors can be constructed by perturbing sensor models from $\Iimg$ with a
 controlled amount of error (randomly sampled from a known distribution), to
-obtain perturbed image set $\Pimg$. In \cite{MIN}, the error model for the SOCET
-GXP Worldview sensor model is tuned to ground truth, and adjusts 6 parameters: 3
-attitude parameters at $\sigma=5\mu$rad, and 3 attitude rate parameters at
-$\sigma=0.5\mu$rad/s, which yields an error of about CE90=??. For this study we
-use the same sensor model, but adopt a significantly larger error model, adding
-3 second-order attiude errors at $\sigma=0.05\mu\mathrm{rad}^2/\mathrm{s}^2$,
-and 9 position/velocity/ac\-cel\-eration errors with $\sigma = 1{\mathrm m},$
-$0.1{\mathrm m}/{\mathrm s},$ $0.01{\mathrm m}^2/{\mathrm s}^2$. (This model
-yields about CE90=??? of error per image). Any subset of images of $\Pimg$
-(along with the truth measurements on those images) can be used as a realistic
-input to least-squares MIG. Apriori covariance input to the MIG is the same
-error model that was used to perturb $\Iimg$ into $\Pimg$.
+obtain perturbed image set $\Pimg$. Nine position/velocity/ac\-cel\-eration
+parametrs are given $\sigma = 1{\mathrm m}, 0.1{\mathrm m}/{\mathrm s},
+0.01{\mathrm m}^2/{\mathrm s}^2$, and 9 attitude/rate/acceleration parameters
+are given
+$\sigma=5\mu\mathrm{rad}, \sigma=0.5\mu\mathrm{rad}, \sigma=0.05\mu\mathrm{rad}$.
+This model yields about CE90=6-8m of error for the original 10 images, depending
+on obliquity. Any subset of images of $\Pimg$ (along with the truth measurements
+on those images) can be used as a realistic input to least-squares MIG. Apriori
+covariance input to the MIG is the same error model that was used to perturb
+$\Iimg$ into $\Pimg$.
 
 Let $\Pimg$ be the set of 1000 perturbed images. For each
 $N\in\{4,5,...$ $100,105,...995\}$, we randomly sample $k=100$ subsets of size
@@ -490,13 +488,15 @@ In conclusion, we conclude.
 
 \bibitem{SGXP}SOCET GXP, {\tt http://geospatialexploitationproducts.com}
 
+\bibitem{PLANE_SWEEP}Szeliski, Richard, 2011. {\em Computer Vision}, Springer,
+  London, p. 474.
+
+\bibitem{FPC}Thompson, Steven K., 2012. {\em Sampling}, 3rd ed. Wiley, Hoboken,
+  p. 15.
+
 \bibitem{WONNACOT_32_3}Wonnacot, W.~M., 2008. {\em Geolocation with Error Analysis
   Using Imagery from an Experimental Spotlight SAR}, PhD Thesis, Purdue.
 % 32 SAR image ``sets'', each a ``three-aperture path sequence''
-
-\bibitem{PLANE_SWEEP}Reference from Joe about ``plane-sweep stereo''
-
-\bibitem{FPC}Finite Population Correction reference, look up something
 
 
 \end{thebibliography}
