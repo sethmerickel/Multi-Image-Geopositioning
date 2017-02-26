@@ -1,0 +1,214 @@
+\documentclass[]{article}
+\usepackage{amssymb, amsmath, bm, nameref}
+
+\newcommand{\imgmeashat}{\pmb{\hat{x}_{i}}}
+\newcommand{\imgmeas}{\pmb{x_{i}}}
+\newcommand{\grndhat}{\pmb{\hat{X}}}
+\newcommand{\grnd}{\pmb{X}}
+\newcommand{\grnditer}{\pmb{X^k}}
+\newcommand{\sensmeashat}{\pmb{\hat{p}_i}}
+\newcommand{\sensmeas}{\pmb{p_i}}
+\newcommand{\imgnu}{\pmb{\nu_{i}^x}}
+\newcommand{\sensnu}{\pmb{\nu_i^p}}
+\newcommand{\grndupdate}{\pmb{\Delta}}
+\newcommand{\grndupdateiter}{\pmb{\Delta^k}}
+\newcommand{\Fimgpartials}{\frac{\partial{\pmb{F_{i}}}}{\partial{\imgmeas}}}
+\newcommand{\Fgrndpartials}{\frac{\partial{\pmb{F_{i}}}}{\partial{\grnd}}}
+\newcommand{\Fsenspartials}{\frac{\partial{\pmb{F_{i}}}}{\partial{\sensmeas}}}
+
+
+
+%opening
+\title{MIG Variance}
+\author{Seth Merickel}
+
+\begin{document}
+
+\maketitle
+
+
+\section*{Introduction}
+
+
+\section*{MIG Equation Derivation}
+The goal is to determine ground locations that minimize the weighted sum of image measurement and sensor parameter deviations using non-linear least squares.  $\grnd = [X, Y, Z]^T$ is the ground point being estimated.  $\imgmeas = [x_{i}, y_{i}]^T$ is the measurement of the ground point in the $i$th image.  The sensor parameters for the $i$th image are $\sensmeas = [p_{i1}, p_{i2}, \ldots]^T$. The ground point, image measurements, and sensor parameters are related through the sensor's ground to image function $\imgmeas = \pmb{g_i}(\sensmeas, \grnd)$.  Let $\pmb{F_{i}}$ be the measurement residual funtion which is the difference between the projected ground point and image measurement
+
+\begin{equation*}
+\pmb{F_{i}}(\sensmeashat, \grndhat,\imgmeashat)=\pmb{g_i}(\sensmeashat,\grndhat)-\imgmeashat
+\end{equation*}
+
+Where $\imgmeashat$, $\sensmeashat$, and $\grndhat$ are measured quantities related to the predicted quantities by:
+
+\begin{equation*}
+\begin{split}
+\imgmeashat = \imgmeas + \imgnu\\
+\sensmeashat    = \sensmeas + \sensnu\\
+\grndhat    = \grnd + \grndupdate
+\end{split}
+\end{equation*}
+
+$\imgnu$ and $\sensnu$ are differences in the predicted and measured image coordinates and sensor parameters respectively.  $\grndupdate$ is the correction to the ground point.
+
+Taylor expanding $\pmb{F_{i}}$ about the predicted values gives
+
+\begin{equation} \label{taylor_eq}
+\pmb{F_{i}}(\sensmeashat, \grndhat, \imgmeashat) = 
+\pmb{F_{i}}(\sensmeas, \grnd, \imgmeas) + \Fimgpartials\imgnu + \Fsenspartials\sensnu + \Fgrndpartials\grndupdate = 0
+\end{equation}
+
+Sensor parameter partials are denoted by $A_{i}^p = \Fsenspartials$, and the sensor ground partials by $B_{i} = \Fgrndpartials$.  The partials with respect to image coordinates are ${\Fimgpartials=-I_{2 \times 2}}$, the negative of the $2 \times 2$ identity matrix.  Substituting $A_{i}^p$ and $B_{i}$ into (\ref{taylor_eq}) and rearranging terms gives:
+
+\begin{equation} \label{linear_eq}
+\begin{split}
+-\imgnu + A_{i}^p\sensnu + B_{i}\grndupdate = \imgmeas - \pmb{g_i}(\sensmeas, \grnd) = \pmb{f_{i}}
+\end{split}
+\end{equation}
+
+Stacking up equations for each measurement into one vector equation gives
+
+\begin{equation}\label{stacked_eq}
+-\pmb{\nu^x} + A^p\pmb{\nu^p} + B\grndupdate = \pmb{f}
+\end{equation}
+
+The shape of the matrices can be found in the section~\nameref{sec:matrices}.  
+
+
+The function to be minimized is the weighted sum of the measurement deviations and sensor deviations given by $\Phi = \pmb{\nu^x}^T W^x \pmb{\nu^x} + \pmb{\nu^p}^T W^p \pmb{\nu^p}$
+
+\begin{equation} \label{phi_eq}
+\Phi = \pmb{\nu^x}^T W^x \pmb{\nu^x} + \pmb{\nu^p}^T W^p \pmb{\nu^p}
+\end{equation}
+where $W^x$ and $W^p$ are weight matrices of the image measurements and sensor parameters respectively.  The goal is to find the ground points that minimize (\ref{phi_eq}) subject to the constraint (\ref{stacked_eq}).  With Lagrange multipliers, this is equivalent to minimizing:
+
+\begin{equation*}
+\Phi = \pmb{\nu^x}^T W^x \pmb{\nu^x} + \pmb{\nu^p}^T W^p \pmb{\nu^p} + \pmb{\lambda}^T(-\pmb{\nu^x} + A^p\pmb{\nu^p} + B\pmb{\Delta} - \pmb{f})
+\end{equation*} 
+
+Where $\pmb{\lambda}^T$ is the Lagrange multiplier.  $\pmb{\Delta}$ is solved for by differentiating with respect to $\imgnu$, $\sensnu$, $\pmb{\Delta}$, and $\pmb{\lambda^T}$ and equating to zero.  This results in four equations:
+
+\begin{equation} \label{partials_eq}
+\begin{split}
+\frac{\partial \Phi}{\partial \pmb{\nu^x}}=\pmb{\nu^x}^T W^x - \pmb{\lambda}^T I = 0 \\
+\frac{\partial \Phi}{\partial \pmb{\nu^p}}=\pmb{\nu^p}^T W^p + \pmb{\lambda}^T A^p = 0 \\
+\frac{\partial \Phi}{\partial \pmb{\lambda}} = A^p\pmb{\nu^p} + B\pmb{\Delta} - \pmb{\nu^x} - \pmb{f} = 0 \\
+\frac{\partial \Phi}{\partial \pmb{\Delta}} = \pmb{\lambda}^TB = 0
+\end{split}
+\end{equation}
+
+$\pmb{\nu^x}$, $\pmb{\nu^p}$, and $\pmb{\lambda}$ can be solved for and eliminated using (\ref{partials_eq}).  The result is a linear equation in $\pmb{\Delta}$ alone.
+
+\begin{equation*}
+B^T W B\pmb{\Delta} = B^T W \pmb{f}
+\end{equation*}
+
+where the weight matrix $W$ is:
+
+\begin{equation*}
+W = ({W^x}^{-1} + A^p {W^p}^{-1} {A^p}^T)^{-1}
+\end{equation*}
+
+This is a non-linear problem so iteration is used to converge to a solution.  After each iteration the ground point locations from the previous iteration are updated $\pmb{X^k} = \pmb{X^{k - 1}} + \pmb{\Delta^k}$.  The partial derivative matrices $A$ and $B$ are evaluated at the new ground point location.  Sensor parameter updates are not applied, and the partial derivative matrices are not evaluated at new sensor parameter locations.
+
+\section*{Matrices} 
+\label{sec:matrices}
+
+This section describes the form of the matrices used in the calculation above.  Let $n_i$ be the number of sensor parameters for the $i$th sensor.  Then summing over all sensors gives $n = \sum_{i}n_i$, the total number of sensor parameters.  Let $m$ be the total number ground points measured.
+
+\begin{equation*}
+A_{ij} = 
+\begin{bmatrix}
+\frac{\partial{\pmb{g_i}}}{\partial{p_{i1}}} & \frac{\partial{\pmb{g_i}}}{\partial{p_{i2}}} & \ldots
+\end{bmatrix}_{2\times n}
+\end{equation*}
+
+\begin{equation*}
+B_{ij} =
+\begin{bmatrix}
+\frac{\partial{\pmb{g_i}}}{\partial{X_j^k}}
+\end{bmatrix}_{2x3}
+\end{equation*}
+
+\begin{equation*}
+\pmb{f_{ij}} =
+\begin{bmatrix}
+\pmb{g_i} - \imgmeas
+\end{bmatrix}_{2\times1}
+\end{equation*}
+
+\begin{equation*}
+\pmb{\nu^x} = 
+\begin{bmatrix}
+\pmb{\nu_{11}^x} \\
+\pmb{\nu_{12}^x} \\
+\vdots \\
+\pmb{\nu_{i1}^x} \\
+\pmb{\nu_{i2}^x} \\
+\vdots \\
+\end{bmatrix}_{2nm \times 1}
+\end{equation*}
+
+\begin{equation*}
+\pmb{\nu^p} = 
+\begin{bmatrix}
+\pmb{\nu_1^p} \\
+\pmb{\nu_2^p} \\
+\pmb{\nu_3^p} \\
+\vdots \\
+\end{bmatrix}_{n \times 1}
+\end{equation*}
+
+\begin{equation*}
+\pmb{\Delta X} =
+\begin{bmatrix}
+\Delta X_1 \\
+\Delta Y_1 \\
+\Delta Z_1 \\
+\Delta X_2 \\
+\Delta Y_2 \\
+\Delta Z_2 \\
+\vdots
+\end{bmatrix}_{3m \times 1}
+\end{equation*}
+
+\begin{equation*}
+\pmb{f} = 
+\begin{bmatrix}
+\pmb{g_1}(\pmb{p_1}, \pmb{X_1}) \\
+\pmb{g_1}(\pmb{p_1}, \pmb{X_2}) \\
+\vdots\\
+\pmb{g_i}(\pmb{p_i}, \pmb{X_1}) \\
+\pmb{g_i}(\pmb{p_i}, \pmb{X_2}) \\
+\vdots
+\end{bmatrix}_{2mn \times 1}
+\end{equation*}
+
+\begin{equation*}
+B = 
+\begin{bmatrix}
+B_{11}  &  \ldots      &     &     & \\
+\vdots  &  B_{12} \\
+  &     &          B_{13} & \ldots \\
+B_{i1}  &  \ldots \\
+\vdots  &  B_{i2} \\
+  &     &  B_{i3}  & \ldots \\ 
+  &     &  \vdots \\
+\end{bmatrix}_{2mn \times 3m}
+\end{equation*}
+
+\begin{equation*}
+A = 
+\begin{bmatrix}
+A_{11} \\
+A_{12} & \ldots \\
+\vdots \\
+   &     A_{21}  \\
+   &     A_{22}  & \ldots  \\
+   &     \vdots \\
+   &   \ldots & A_{i1} \\
+   &          & A_{i2} & \ldots\\
+   &          & \vdots &  
+\end{bmatrix}_{2mn \times n}
+\end{equation*}
+
+
+\end{document}
