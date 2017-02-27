@@ -15,7 +15,9 @@
 \newcommand{\Fimgpartials}{\frac{\partial{\pmb{F_{i}}}}{\partial{\imgmeas}}}
 \newcommand{\Fgrndpartials}{\frac{\partial{\pmb{F_{i}}}}{\partial{\grnd}}}
 \newcommand{\Fsenspartials}{\frac{\partial{\pmb{F_{i}}}}{\partial{\sensmeas}}}
+\newcommand{\btwbi}{B^T_iW_iB_i}
 
+\newtheorem{theorem}{Theorem}
 
 
 %opening
@@ -121,4 +123,60 @@ B_{2} \\
 \end{aligned}
 \end{align}
 
+\section*{Covariance}
+From the normal equations (\ref{normal_eq}) it is straight forward to show that the covariance of the ground point estimate is:
+\begin{equation} \label{covariance_eq}
+C = (B^TWB)^{-1}
+\end{equation}
+
+To understand how $C$ depends on the number of images, we establish and upper bound on $C$ and show that the variance of each component decays as $1/N$ where $N$ is the number of images.  First we must establish a mechanism for comparing covariance matrices.  We use the volume of the standard ellipsoid $(X - \bar{X})^TC(X - \bar{X}) = 1$ to order covariance matrices for this analysis.  The volume of an ellipse is $1/4 \pi abc$ where $a$, $b$, and $c$ are the lengths of the three axes of the ellipsoid.  The covariance matrix is positive definite so the lengths of the three axes are the eigenvalues $\lambda_1$, $\lambda_2$, and $\lambda_3$ (We use the convention $\lambda_1 \le \lambda_2 \le \lambda_3$).  Using the fact that the determinant of positive definite matrices is the product of the eigenvalues we have: $C_1 \ge C_2 \leftrightarrow |C_1| \ge |C_2|$
+
+Using (\ref{covariance_eq}), and the properties of the determinant, we have $C$ is $|C| = |B^TWB|^{-1}$.  To get an upper bound on $C$ we can get a lower bound on $B^TWB$.  We now make the reasonable assumptions that the image measurements are uncorrelated, and sensor parameters for different images are uncorrelated.  This means the image measurement covariance matrix $C^x$ and sensor parameter covariance matrix $C^p$ are block diagonal.  Using equations (\ref{weight_eq}), (\ref{full_partials}), and (\ref{covariance_eq}) we have:
+
+\begin{align}\label{btwb_eq}
+\begin{aligned}
+B^TWB =  & \sum_{i}B^T_i(C^x_i + A_iC^p_iA^T_i)^{-1}B_i = \sum_{i}B^T_iW_iB_i \\
+& \text{where}\ W_i = (C^x_i + A_iC^p_iA^T_i)^{-1}
+\end{aligned}
+\end{align}
+
+Let $A$ be an $n\times n$ matrix then $\lambda_i(A)$ is the $i$th smallest eigenvalue of $A$.  In (\ref{btwb_eq}) each image contributes a $\btwbi$ term to the sum.  We now make the assumption that for any $i, j \in 1\dots n$  $i \ne j$ and $\delta > 0$
+
+\begin{equation}\label{w_assumption_eq}
+\lambda_1(B^T_iW_iB_i + B^T_jW_jB_j)  \geq \delta
+\end{equation}
+
+This assumption states that the smallest eigenvalue of the sum of any two $\btwbi$ is greater than some value $\delta$.  This assumption amounts to ensuring that no pair of measurements have rays that are collinear.  This is a reasonable assumption.  For example, a ground point cannot be extracted from images when the measurement rays are collinear. 
+
+The following theorem from (HORN AND JOHNSON REFERENCE) page 239 allows us to compute a lower bound on $B^TWB$
+
+\begin{theorem} \label{theorem_1}
+	Let $A$ and $B$ be $n \times n$ Hermitian matrices and let the respective eigenvalues of $A$, $B$ and $A + B$ be ${\lambda_i(A)}^n_{i=1}$, ${\lambda_i(B)}^n_{i=1}$, and ${\lambda_i(A+B)}^n_{i=1}$ ordered from least to algebraically ordered from least to greatest.  Then
+	
+	\begin{equation}\label{eigenvalue_1_eq}
+	\lambda_i(A+B) \leq \lambda_{i+j}(A) + \lambda_{n-j}(B),\quad j = 0, 1, \dots, n-i
+	\end{equation}
+	for each $i = 1, \dots, n$, with equality for some pair $i, j$ if and only if there is a nonzero vector $x$ such that $Ax=\lambda_{i+j}(A)x, Bx = \lambda_{n-j}(B)x$, and $(A+B)x = \lambda_i(A+B)x$.  Also
+	\begin{equation} \label{eigenvalue_2_eq}
+	\lambda_{i-j+1}(A) + \lambda_j(B) \leq \lambda_i(A+B), \quad j=1,\dots,i
+	\end{equation}
+	for each $i = 1, \dots, n$, with equality for some pair $i, j$ if and only if there is a nonzero vector $x$ such that $Ax = \lambda_{i-j+1}(A)x$, $Bx = \lambda_j(B)x$, and $(A+B)x = \lambda_i(A+B)x$. If $A$ and $B$ have no common eigenvector, then every inequality in (\ref{eigenvalue_1_eq}) and (\ref{eigenvalue_2_eq}) is a strict inequality.
+\end{theorem}
+
+\begin{theorem} \label{theorem_2}
+	 For $\delta > 0$ if $\lambda_1(B^T_iW_iB_i + B^T_jW_jB_j) \geq \delta$ for all $i, j = 1, \dots, n$ $i \ne j$ then $\lambda_1(\sum_i B^T_iW_iB_i) \geq \frac{n\delta}{2}$ for $n$ even and $\frac{(n-1)\delta}{2}$ for $n$ odd
+\end{theorem}
+
+This can be proven using strong induction.  We will outline the proof for even $n$.  First notice that $\lambda_1(B^T_1W_1B_1 + B^T_2W_2B_2) \geq \delta$ by assumption.  Assume $\lambda_1(\sum^k_i B^T_iW_iB_i) \geq \frac{k\delta}{2}$ for all even $k < n$ and $\lambda_1(\sum^k_i B^T_iW_iB_i) \geq \frac{(k-1)\delta}{2}$ for all odd $k < n$.  Then 
+\begin{align*}
+\begin{aligned}
+\lambda_1(\sum^n_iB^T_iW_iB_i) = &\lambda_1(\sum^{n-2}_i B^T_iW_iB_i + B^T_{n-1}W_{n-1}B_{n-1} +  B^T_{n}W_{n}B_{n}) \geq \\
+&\lambda_1(\sum^{n-2}_i B^T_iW_iB_i) +  \lambda_1(B^T_{n-1}W_{n-1}B_{n-1} + B^T_{n}W_{n}B_{n}) \geq \\
+&\frac{(n-2)\delta}{2} + \delta = \frac{n\delta}{2}
+\end{aligned}
+\end{align*}
+
+The first inequality follows from theorem \ref{theorem_1} and the second inequality follows from the induction hypothesis.  
+
+We can now define the matrix $M(n) = \frac{(n-1)\delta}{2}I_{3 \times 3}$ where $I_{3\times 3}$ is the $3 \times 3$ identity matrix.  The eigenvalues of $M(n)$ are $\frac{(n-1)\delta}{2}$ which is less than or equal to the smallest eigenvalue of $sum^n_i B^T_iW_iB_i$ by theorem \ref{theorem_2}.  This means $|B^TWB| \geq |M(n)|$ or $|C| \leq |M(n)^{-1}|$ where $M(n)^{-1} = \frac{2}{(n-1)\delta}I_{3\times 3}$ which shows that the variance of the estimated ground point decreases as $1/n$ where $n$ is the number of images
 \end{document}
