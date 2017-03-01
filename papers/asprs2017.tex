@@ -4,14 +4,35 @@
 %\usepackage{amsmath}
 \usepackage{graphicx} % for png figures
 \usepackage{subcaption} % for subfigures
-\usepackage{amsaddr} % addresses up front
+%\usepackage{amsaddr} % addresses up front
+%\usepackage{amssymb, amsmath, bm, nameref}
 \pagenumbering{gobble} % no page numbers
+
+\newcommand{\Iimg}{\mathcal{I}}
+\newcommand{\Pimg}{\mathcal{P}}
+
+\newcommand{\imgmeashat}{\pmb{\hat{x}_{i}}}
+\newcommand{\imgmeas}{\pmb{x_{i}}}
+\newcommand{\grndhat}{\pmb{\hat{X}}}
+\newcommand{\grnd}{\pmb{X}}
+\newcommand{\grnditer}{\pmb{X^k}}
+\newcommand{\sensmeashat}{\pmb{\hat{p}_i}}
+\newcommand{\sensmeas}{\pmb{p_i}}
+\newcommand{\imgnu}{\pmb{\nu_{i}^x}}
+\newcommand{\sensnu}{\pmb{\nu_i^p}}
+\newcommand{\grndupdate}{\pmb{\Delta}}
+\newcommand{\grndupdateiter}{\pmb{\Delta^k}}
+\newcommand{\Fimgpartials}{\frac{\partial{\pmb{F_{i}}}}{\partial{\imgmeas}}}
+\newcommand{\Fgrndpartials}{\frac{\partial{\pmb{F_{i}}}}{\partial{\grnd}}}
+\newcommand{\Fsenspartials}{\frac{\partial{\pmb{F_{i}}}}{\partial{\sensmeas}}}
+\newcommand{\btwbi}{B^T_iW_iB_i}
+\newcommand{\btwbj}{B^T_jW_jB_j}
+
+\newtheorem{theorem}{Theorem}
 
 
 \begin{document}
 
-\newcommand{\Iimg}{\mathcal{I}}
-\newcommand{\Pimg}{\mathcal{P}}
 
 \title[Small Geopositioning Error from Many Images]{}
 %{Asymptotically Small Geopositioning Error from Large Sets of Imagery}
@@ -95,10 +116,198 @@ can be overcome by the power of large amounts of statistically independent
 information from huge numbers of images.
 
 \section{Least-Squares MIG With Many Images}
-\subsection{MIG}\label{MIG}
-TBD: Use least-squares to show $\lim_{n\rightarrow\inf}err=0$.
+\subsection{MIG Solution}\label{MIG}
+We begin with a derivation of least-squares MIG. For the details of this
+procedure see the discussion of the Gauss-Helmert model in \cite{LSQRMIG},
+\cite{PHOTO_CV}, \cite{MANUAL}.
 
-\subsection{Simulation with Synthetic Imagery}
+In general MIG can determine the locations and joint covariance of many ground
+points, but here we are concerned with just one point. Also, MIG is capable of
+appropriately handling known correlations, but for our purposes we assume full
+independence between all images and measurements.
+
+The goal is therefore to determine ground location that minimizes the weighted
+sum of image measurement and sensor parameter deviations using non-linear least
+squares. Let $\grnd = [X, Y, Z]'$ be an intial estimate of the ground point
+being estimated.  $\imgmeas = [x_{i}, y_{i}]'$ is the measurement of the ground
+point in the $i$th image.  The sensor parameters for the $i$th image are
+$\sensmeas = [p_{i1}, p_{i2}, \ldots]'$. The ground point, image measurements,
+and sensor parameters are related through the sensor's ground to image function
+$\imgmeas = \pmb{g_i}(\sensmeas, \grnd)$.  Let $\pmb{F_{i}}$ be the measurement
+residual function for the $i^{th}$ image, which is the difference between the
+projected ground point and image measurement:
+
+\begin{equation*}
+\pmb{F_{i}}(\sensmeashat, \grndhat,\imgmeashat)=\pmb{g_i}(\sensmeashat,\grndhat)-\imgmeashat,
+\end{equation*}
+
+where $\imgmeashat$, $\sensmeashat$, and $\grndhat$ are measured quantities
+related to the predicted quantities by:
+
+\begin{equation*}
+\begin{split}
+\imgmeashat = \imgmeas + \imgnu\\
+\sensmeashat    = \sensmeas + \sensnu\\
+\grndhat    = \grnd + \grndupdate
+\end{split}
+\end{equation*}
+
+$\imgnu$ and $\sensnu$ are differences in the predicted and measured image
+coordinates and sensor parameters respectively.  $\grndupdate$ will be the
+correction to the ground point, for which we are solving.
+
+Taylor expanding $\pmb{F_{i}}$ about the predicted values gives
+
+\begin{equation} \label{taylor_eq}
+\pmb{F_{i}}(\sensmeashat, \grndhat, \imgmeashat) = 
+\pmb{F_{i}}(\sensmeas, \grnd, \imgmeas) + \Fimgpartials\imgnu + \Fsenspartials\sensnu + \Fgrndpartials\grndupdate = 0
+\end{equation}
+
+Sensor parameter partials are denoted by $A_{i}^p = \Fsenspartials$, and the
+sensor ground partials by $B_{i} = \Fgrndpartials$.  The partials with respect
+to image coordinates are ${\Fimgpartials=-I_{2 \times 2}}$, the negative of the
+$2 \times 2$ identity matrix.  Substituting $A_{i}^p$ and $B_{i}$ into
+(\ref{taylor_eq}) and rearranging terms gives:
+
+\begin{equation} \label{linear_eq}
+\begin{split}
+-\imgnu + A_{i}^p\sensnu + B_{i}\grndupdate = \imgmeas - \pmb{g_i}(\sensmeas, \grnd) = \pmb{f_{i}}
+\end{split}
+\end{equation}
+
+Stacking up equations for each measurement into one vector equation gives
+
+\begin{equation}\label{stacked_eq}
+-\pmb{\nu^x} + A^p\pmb{\nu^p} + B\grndupdate = \pmb{f}
+\end{equation}
+
+The function to be minimized is the weighted sum of the measurement deviations
+and sensor deviations given by 
+$\Phi = \pmb{\nu^x}' W^x \pmb{\nu^x} + \pmb{\nu^p}' W^p \pmb{\nu^p}$ 
+subject to the constraints in (\ref{stacked_eq}).
+$W^x$ and $W^p$ are inverses of the measurement covariance matrix and sensor
+parameter covariance matrix respectively. When the sensor parameter and image
+measurement sources of error are combined into a single weight matrix
+
+\begin{equation}\label{weight_eq}
+W = ({W^x}^{-1} + A^p {W^p}^{-1} {A^p}')^{-1}
+\end{equation}
+
+the resulting normal equations are:
+
+\begin{equation} \label{normal_eq}
+B' W B\pmb{\Delta} = B' W \pmb{f}
+\end{equation}
+
+This linear system can be solved for $\Delta$, which is used to correct the
+ground estimate $\grnd$. To the extent that partial derivative matrices $A$
+and $B$ evaluated at $\grnd$ vs $\grnd+\Delta$, this is a non-linear
+problem, so iteration is used to converge to a solution.  After each iteration
+the ground point locations from the previous iteration are updated $\pmb{X^k} =
+\pmb{X^{k - 1}} + \pmb{\Delta^k}$, and the partial derivative matrices $A$ and
+$B$ are evaluated at the new ground point location for the next iteration.
+Convergence is typically achieved after only a few iterations. (However for the
+experiments in section \ref{simulation}, the partial derivatives were so stable,
+only one iteration was necessary; the 2nd iteration yielded only negligible
+correction.)
+
+\subsection{MIG Covariance}
+From the normal equations (\ref{normal_eq}) it is straightforward to show that
+the covariance of the ground point estimate is:
+\begin{equation} \label{covariance_eq}
+C^g = (B'WB)^{-1}
+\end{equation}
+
+To understand how $C^g$ depends on the number of images, we establish and upper
+bound on $C^g$ and show that the variance of each component decays as $1/N$
+where $N$ is the number of images.  As a metric for comparing covariance
+matrices, we use the volume of the standard ellipsoid $(X - \bar{X})'C^g(X -
+\bar{X}) = 1$ to order covariance matrices for this analysis.  The volume of an
+ellipsoid is $1/4 \pi abc$ where $a$, $b$, and $c$ are the lengths of the three
+axes of the ellipsoid, which are the eigenvalues $\lambda_1$, $\lambda_2$, and
+$\lambda_3$ (We use the convention $\lambda_1 \le \lambda_2 \le \lambda_3$, and
+since covariance matrices are positive definite, $\lambda_1 > 0$).  Using
+the fact that the determinant of a positive definite matrix is the product of
+the eigenvalues we have: $C_1 \ge C_2 \leftrightarrow |C_1| \ge |C_2|$
+
+Using (\ref{covariance_eq}), and the properties of the determinant, we have $|C|
+= |B'WB|^{-1}$. Since we want an upper bound on $|C|$, we need to demonstrate
+lower bound for $|B'WB|$. Recall the initial assumption of independence of all
+image measurements sensor parameters for different images.  This means the image
+measurement covariance matrix $C^m$ and sensor parameter covariance matrix $C^p$
+are block diagonal. Thus we have:
+
+\begin{eqnarray}\label{btwb_eq}
+B'WB & = & \sum_{i}B'_i(C^m_i + A_iC^p_iA'_i)^{-1}B_i \nonumber \\
+     & = & \sum_{i}B'_iW_iB_i
+\end{eqnarray}
+
+where $W_i = (C^x_i + A_iC^p_iA^T_i)^{-1}$.
+
+If $A$ is an $n\times n$ matrix then let $\lambda_i(A)$ be the $i$th smallest
+eigenvalue of $A$.  In (\ref{btwb_eq}) each image contributes a $\btwbi$ term to
+the sum. Because $W_i$ is $2\times 2$ and $B_i$ is $2\times 3$, each $\btwbi$ is
+$3\times 3$ and only rank 2. The two nontrivial eigenvectors of $\btwbi$ are the
+rows of $B_i$ (the ground-space projections of the line and sample directions in
+image space), and the eigenvector corresponding to $\lambda_1(\btwbi)$ is their
+cross-product, the line of sight vector.
+
+Assume two images such that line of sight vectors from images and measurements
+$i$ and $j$ are identical/parallel. Call that vector $l$. Then 
+
+\begin{eqnarray*}
+l'(\btwbi+\btwbj)l & = & l'\btwbi l + l'\btwbj l \\
+                   & = & 0 + 0
+\end{eqnarray*}
+Thus $l$ is also a trivial eigenvalue of $\btwbi+\btwbj$, and $\lambda_1(\btwbi+\btwbj)=0$.
+
+However, since in reality no two images will be collected with perfectly
+parallel image rays, we can safely assume that for all $i\ne j\in 1\ldots n$,
+$\lambda_1(\btwbi+\btwbj)>0$. Let 
+\begin{equation}\label{w_assumption_eq}
+\delta = \min_{i\ne j}\lambda_1(\btwbi+\btwbj) > 0
+\end{equation}
+
+\cite{H_AND_J} gives a useful property of eigenvalues of positive semidefinite
+matrices $A$ and $B$: for $j\le i,
+\lambda_{i-j+1}(A)+\lambda_j(B)<=\lambda_i(A+B)$.
+In particular, for $j=i=1$,
+\begin{equation}\label{HJ_4_3_1}
+\lambda_1(\btwbi)+\lambda_1(\btwbj) \le \lambda(\btwbi+\btwbj)
+\end{equation}
+
+Using (\ref{HJ_4_3_1}), we can prove the following theorem:
+
+\begin{theorem} \label{theorem_2}
+	 For $\delta > 0$ if $\lambda_1(B'_iW_iB_i + B'_jW_jB_j) \geq \delta$
+         for all $i, j = 1, \dots, n$ $i \ne j$ then $\lambda_1(\sum_i
+         B'_iW_iB_i) \geq \frac{n\delta}{2}$ for $n$ even and
+         $\frac{(n-1)\delta}{2}$ for $n$ odd
+\end{theorem}
+
+This can be proven using strong induction.  We will outline the proof for even
+$n$.  First notice that $\lambda_1(B'_1W_1B_1 + B'_2W_2B_2) \geq \delta$ by
+definition.  Assume $\lambda_1(\sum^k_i B'_iW_iB_i) \geq \frac{k\delta}{2}$ for
+all even $k < n$ and $\lambda_1(\sum^k_i B'_iW_iB_i) \geq
+\frac{(k-1)\delta}{2}$ for all odd $k < n$.  Then
+\begin{eqnarray*}
+\lambda_1(\sum^n_iB'_iW_iB_i) &=&\lambda_1(\sum^{n-2}_i B'_iW_iB_i + B'_{n-1}W_{n-1}B_{n-1} +  B'_{n}W_{n}B_{n})\\
+&\geq&\lambda_1(\sum^{n-2}_i B'_iW_iB_i) +  \lambda_1(B'_{n-1}W_{n-1}B_{n-1} + B'_{n}W_{n}B_{n})\\
+&\geq&\frac{(n-2)\delta}{2} + \delta = \frac{n\delta}{2}
+\end{eqnarray*}
+
+The first inequality follows from (\ref{HJ_4_3_1}) and the second
+inequality follows from the induction hypothesis. $\qed$
+
+We can now define the matrix $M(n) = \frac{(n-1)\delta}{2}I_{3 \times 3}$ where
+$I_{3\times 3}$ is the $3 \times 3$ identity matrix.  The eigenvalues of $M(n)$
+are $\frac{(n-1)\delta}{2}$ which is less than or equal to the smallest
+eigenvalue of $\sum^n_i B'_iW_iB_i$ by theorem \ref{theorem_2}.  This means
+$|B'WB| \geq |M(n)|$ or $|C| \leq |M(n)^{-1}|$ where $M(n)^{-1} =
+\frac{2}{(n-1)\delta}I_{3\times 3}$ which shows that the variance of the
+estimated ground point decreases as $1/n$ where $n$ is the number of images.
+
+\subsection{\label{simulation}Simulation with Synthetic Imagery}
 In this section we construct a large testbed of simulated/\-syn\-the\-tic imagery, and
 evaluate the accuracy of MIG geolocation and error estimation, on samples of
 randomly-selected subsets of images, of size ranging from 4 to 1000.
@@ -459,6 +668,8 @@ In conclusion, we conclude.
 
 
 \begin{thebibliography}{99} % 2-digit reference nums
+
+\bibitem{MANUAL}ASPRS, 20xx {\em Manual of Photogrammetry}, 9th ed., pp ??.
 
 \bibitem{LLN} Casella, George, Roger L. Berger, 1990. {\em Statistical
   Inference}, Brooks/Cole, Belmont CA, pp. 214-20.
