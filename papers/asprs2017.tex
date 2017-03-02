@@ -18,7 +18,7 @@
 \newcommand{\grnditer}{\pmb{X^k}}
 \newcommand{\sensmeashat}{\pmb{\hat{p}_i}}
 \newcommand{\sensmeas}{\pmb{p_i}}
-\newcommand{\imgnu}{\pmb{\nu_{i}^x}}
+\newcommand{\imgnu}{\pmb{\nu_{i}^m}}
 \newcommand{\sensnu}{\pmb{\nu_i^p}}
 \newcommand{\grndupdate}{\pmb{\Delta}}
 \newcommand{\grndupdateiter}{\pmb{\Delta^k}}
@@ -128,13 +128,13 @@ independence between all images and measurements.
 
 The goal is therefore to determine ground location that minimizes the weighted
 sum of image measurement and sensor parameter deviations using non-linear least
-squares. Let $\grnd = [X, Y, Z]'$ be an intial estimate of the ground point
+squares. Let $\grnd = [X, Y, Z]'$ be the a priori position of the ground point
 being estimated.  $\imgmeas = [x_{i}, y_{i}]'$ is the measurement of the ground
 point in the $i$th image.  The sensor parameters for the $i$th image are
 $\sensmeas = [p_{i1}, p_{i2}, \ldots]'$. The ground point, image measurements,
 and sensor parameters are related through the sensor's ground to image function
 $\imgmeas = \pmb{g_i}(\sensmeas, \grnd)$.  Let $\pmb{F_{i}}$ be the measurement
-residual function for the $i^{th}$ image, which is the difference between the
+residual function for the $i$th image, which is the difference between the
 projected ground point and image measurement:
 
 \begin{equation*}
@@ -166,19 +166,19 @@ Taylor expanding $\pmb{F_{i}}$ about the predicted values gives
 Sensor parameter partials are denoted by $A_{i}^p = \Fsenspartials$, and the
 sensor ground partials by $B_{i} = \Fgrndpartials$.  The partials with respect
 to image coordinates are ${\Fimgpartials=-I_{2 \times 2}}$, the negative of the
-$2 \times 2$ identity matrix.  Substituting $A_{i}^p$ and $B_{i}$ into
+$2 \times 2$ identity matrix.  Substituting $A_{i}$ and $B_{i}$ into
 (\ref{taylor_eq}) and rearranging terms gives:
 
 \begin{equation} \label{linear_eq}
 \begin{split}
--\imgnu + A_{i}^p\sensnu + B_{i}\grndupdate = \imgmeas - \pmb{g_i}(\sensmeas, \grnd) = \pmb{f_{i}}
+-\imgnu + A_{i}\sensnu + B_{i}\grndupdate = \imgmeas - \pmb{g_i}(\sensmeas, \grnd) = \pmb{f_{i}}
 \end{split}
 \end{equation}
 
 Stacking up equations for each measurement into one vector equation gives
 
 \begin{equation}\label{stacked_eq}
--\pmb{\nu^x} + A^p\pmb{\nu^p} + B\grndupdate = \pmb{f}
+-\pmb{\nu^x} + A\pmb{\nu^p} + B\grndupdate = \pmb{f}
 \end{equation}
 
 The function to be minimized is the weighted sum of the measurement deviations
@@ -186,17 +186,17 @@ and sensor deviations given by
 $\Phi = \pmb{\nu^x}' W^x \pmb{\nu^x} + \pmb{\nu^p}' W^p \pmb{\nu^p}$ 
 subject to the constraints in (\ref{stacked_eq}).
 $W^x$ and $W^p$ are inverses of the measurement covariance matrix and sensor
-parameter covariance matrix respectively. When the sensor parameter and image
-measurement sources of error are combined into a single weight matrix
-
-\begin{equation}\label{weight_eq}
-W = ({W^x}^{-1} + A^p {W^p}^{-1} {A^p}')^{-1}
-\end{equation}
-
-the resulting normal equations are:
+parameter covariance matrix respectively. Minimizing $\Phi$ using Lagrange multipliers 
+to account for the constraint specified in (\ref{stacked_eq}) results in the following normal equations:
 
 \begin{equation} \label{normal_eq}
 B' W B\pmb{\Delta} = B' W \pmb{f}
+\end{equation}
+
+where $W$ is the sensor parameter and image measurement error combined into a single weight matrix:
+
+\begin{equation}\label{weight_eq}
+W = ({W^x}^{-1} + A {W^p}^{-1} {A}')^{-1}
 \end{equation}
 
 This linear system can be solved for $\Delta$, which is used to correct the
@@ -222,16 +222,17 @@ To understand how $C^g$ depends on the number of images, we establish and upper
 bound on $C^g$ and show that the variance of each component decays as $1/N$
 where $N$ is the number of images.  As a metric for comparing covariance
 matrices, we use the volume of the standard ellipsoid $(X - \bar{X})'C^g(X -
-\bar{X}) = 1$ to order covariance matrices for this analysis.  The volume of an
-ellipsoid is $1/4 \pi abc$ where $a$, $b$, and $c$ are the lengths of the three
-axes of the ellipsoid, which are the eigenvalues $\lambda_1$, $\lambda_2$, and
-$\lambda_3$ (We use the convention $\lambda_1 \le \lambda_2 \le \lambda_3$, and
+\bar{X}) = 1$.  Note that we do not need to differentiate between rotated identical
+ellipsoids that differ by rotation.  The volume of an ellipsoid is $1/4 \pi abc$, 
+where $a$, $b$, and $c$ are the lengths of the three axes of the ellipsoid, which 
+are the eigenvalues $\lambda_1$, $\lambda_2$, and $\lambda_3$ of the covariance matrix
+(We use the convention $\lambda_1 \le \lambda_2 \le \lambda_3$, and
 since covariance matrices are positive definite, $\lambda_1 > 0$).  Using
 the fact that the determinant of a positive definite matrix is the product of
 the eigenvalues we have: $C_1 \ge C_2 \leftrightarrow |C_1| \ge |C_2|$
 
 Using (\ref{covariance_eq}), and the properties of the determinant, we have $|C|
-= |B'WB|^{-1}$. Since we want an upper bound on $|C|$, we need to demonstrate
+= |B'WB|^{-1}$. Since we want an upper bound on $|C|$, we need to demonstrate a
 lower bound for $|B'WB|$. Recall the initial assumption of independence of all
 image measurements sensor parameters for different images.  This means the image
 measurement covariance matrix $C^m$ and sensor parameter covariance matrix $C^p$
@@ -242,17 +243,17 @@ B'WB & = & \sum_{i}B'_i(C^m_i + A_iC^p_iA'_i)^{-1}B_i \nonumber \\
      & = & \sum_{i}B'_iW_iB_i
 \end{eqnarray}
 
-where $W_i = (C^x_i + A_iC^p_iA^T_i)^{-1}$.
+where $W_i = (C^m_i + A_iC^p_iA^T_i)^{-1}$.
 
 If $A$ is an $n\times n$ matrix then let $\lambda_i(A)$ be the $i$th smallest
 eigenvalue of $A$.  In (\ref{btwb_eq}) each image contributes a $\btwbi$ term to
 the sum. Because $W_i$ is $2\times 2$ and $B_i$ is $2\times 3$, each $\btwbi$ is
-$3\times 3$ and only rank 2. The two nontrivial eigenvectors of $\btwbi$ are the
+$3\times 3$ and only rank 2. The two eigenvectors with nonzero eigenvalues of $\btwbi$ are the
 rows of $B_i$ (the ground-space projections of the line and sample directions in
-image space), and the eigenvector corresponding to $\lambda_1(\btwbi)$ is their
-cross-product, the line of sight vector.
+image space), and the eigenvector corresponding to the zero eigenvalue $\lambda_1(\btwbi)$ is their
+cross-product, the image measurement ray.
 
-Assume two images such that line of sight vectors from images and measurements
+Assume two images such that measurement rays from images and measurements
 $i$ and $j$ are identical/parallel. Call that vector $l$. Then 
 
 \begin{eqnarray*}
@@ -273,12 +274,12 @@ matrices $A$ and $B$: for $j\le i,
 \lambda_{i-j+1}(A)+\lambda_j(B)<=\lambda_i(A+B)$.
 In particular, for $j=i=1$,
 \begin{equation}\label{HJ_4_3_1}
-\lambda_1(\btwbi)+\lambda_1(\btwbj) \le \lambda(\btwbi+\btwbj)
+\lambda_1(\btwbi)+\lambda_1(\btwbj) \le \lambda_1(\btwbi+\btwbj)
 \end{equation}
 
 Using (\ref{HJ_4_3_1}), we can prove the following theorem:
 
-\begin{theorem} \label{theorem_2}
+\begin{theorem} \label{theorem_1}
 	 For $\delta > 0$ if $\lambda_1(B'_iW_iB_i + B'_jW_jB_j) \geq \delta$
          for all $i, j = 1, \dots, n$ $i \ne j$ then $\lambda_1(\sum_i
          B'_iW_iB_i) \geq \frac{n\delta}{2}$ for $n$ even and
@@ -299,13 +300,13 @@ all even $k < n$ and $\lambda_1(\sum^k_i B'_iW_iB_i) \geq
 The first inequality follows from (\ref{HJ_4_3_1}) and the second
 inequality follows from the induction hypothesis. $\qed$
 
-We can now define the matrix $M(n) = \frac{(n-1)\delta}{2}I_{3 \times 3}$ where
-$I_{3\times 3}$ is the $3 \times 3$ identity matrix.  The eigenvalues of $M(n)$
-are $\frac{(n-1)\delta}{2}$ which is less than or equal to the smallest
-eigenvalue of $\sum^n_i B'_iW_iB_i$ by theorem \ref{theorem_2}.  This means
-$|B'WB| \geq |M(n)|$ or $|C| \leq |M(n)^{-1}|$ where $M(n)^{-1} =
-\frac{2}{(n-1)\delta}I_{3\times 3}$ which shows that the variance of the
-estimated ground point decreases as $1/n$ where $n$ is the number of images.
+We can now define the matrix $M(N) = \frac{(N-1)\delta}{2}I_{3 \times 3}$ where 
+$N$ is the number of images, and $I_{3\times 3}$ is the $3 \times 3$ identity matrix. The eigenvalues of $M(N)$
+are $\frac{(N-1)\delta}{2}$ which is less than or equal to the smallest
+eigenvalue of $\sum^N_i B'_iW_iB_i$ by theorem \ref{theorem_1}.  This means
+$|B'WB| \geq |M(N)|$ or $|C| \leq |M(N)^{-1}|$ where $M(N)^{-1} =
+\frac{2}{(N-1)\delta}I_{3\times 3}$ which shows that the variance of the
+estimated ground point decreases as $1/N$.
 
 \subsection{\label{simulation}Simulation with Synthetic Imagery}
 In this section we construct a large testbed of simulated/\-syn\-the\-tic imagery, and
@@ -343,7 +344,7 @@ are given
 $\sigma=5\mu\mathrm{rad}, \sigma=0.5\mu\mathrm{rad}, \sigma=0.05\mu\mathrm{rad}$.
 This model yields about CE90=6-8m of error for the original 10 images, depending
 on obliquity. Any subset of images of $\Pimg$ (along with the truth measurements
-on those images) can be used as a realistic input to least-squares MIG. Apriori
+on those images) can be used as a realistic input to least-squares MIG. A priori
 covariance input to the MIG is the same error model that was used to perturb
 $\Iimg$ into $\Pimg$.
 
@@ -381,7 +382,7 @@ each of these MIGs, and observe the distribution of error as $N$ increases.
 
 Figure \ref{fig:vanillaref} shows the reference variances of every MIG from this
 experiment (a total of 27600 individual MIG calculations). Reference variance is
-tightly clustered around 1, which demonstrates that the use of apriori
+tightly clustered around 1, which demonstrates that the use of a priori
 covariance in the MIG calculations is consistent with the errors involved in the
 perturbation of $\Pimg$.
 
@@ -394,7 +395,7 @@ images of $\Pimg$, the MIG solution differs from ground truth by (-0.0049,
 $N\rightarrow 1000$, bias across the $k=100$ MIGs for each $N$ converges to that
 error inherent to $\Pimg$.
 
-To avoid positive and negative errors cancelling each other out, we switch to
+To avoid positive and negative errors canceling each other out, we switch to
 positive quantities. Figure \ref{fig:vanilla_pred_meas}a shows the average
 predicted and measured CE90/LE90 for each $N$ across the $k=100$ MIGs for that
 $N$. To clarify the rate of convergence and separation of the curves, a
@@ -402,7 +403,7 @@ logarithmic scale is used. (The measured errors are adjusted with a finite
 population correction of $\sqrt{(1000-N)/(1000-1)}$ \cite{FPC}. The deviation of
 the measured errors from prediction near 1000 is believed to be due to
 limitations of the finite population correction when applied to a 90\% statistic
-rather than a 1-sigma standard devation.)
+rather than a 1-sigma standard deviation)
 
 In order to demonstrate the $1/\sqrt{N}$ behavior of MIG error, Figure
 \ref{fig:vanilla_pred_meas}b scales each point from Figure
@@ -618,7 +619,7 @@ This allows estimation of error apart from the output covariance of the $N$-MIG
 output covariance is a natural by-product of the MIG algorithm. But for
 Hourglassing, this provides a method of error estimation which requires no
 apriori error information, simply calculation of additional, smaller Hourglass
-calculations on many subamples, and computation and scaling of the sample
+calculations on many subsamples, and computation and scaling of the sample
 covariance of the resulting set of geolocations.
 
 The fundamental principle behind this error estimation technique, is that
