@@ -129,7 +129,7 @@ independence between all images and measurements.
 
 The goal is therefore to determine the ground location that minimizes the weighted
 sum of image measurement and sensor parameter deviations using non-linear least
-squares. Let $\grnd = [X, Y, Z]'$ be the a priori position of the ground point
+squares. Let $\grnd = [X, Y, Z]'$ be the apriori position of the ground point
 being estimated.  $\imgmeas = [x_{i}, y_{i}]'$ is the measurement of the ground
 point in the $i$th image.  The sensor parameters for the $i$th image are
 $\sensmeas = [p_{i1}, p_{i2}, \ldots]'$. The ground point, image measurements,
@@ -291,7 +291,6 @@ $n$ starting with the following motivation:
 
 \begin{equation*}
 \vdots
-
 \end{equation*}
 
 The pattern above suggests that the theorem is correct.  To make the argument more 
@@ -364,7 +363,7 @@ are given
 $\sigma=5\mu\mathrm{rad}, \sigma=0.5\mu\mathrm{rad}, \sigma=0.05\mu\mathrm{rad}$.
 This model yields a CE90 of about 6-8m for the original 10 images, depending
 on obliquity. Any subset of images of $\Pimg$ (along with the truth measurements
-on those images) can be used as a realistic input to least-squares MIG. A priori
+on those images) can be used as a realistic input to least-squares MIG. Apriori
 covariance input to the MIG is the same error model that was used to perturb
 $\Iimg$ into $\Pimg$.
 
@@ -402,7 +401,7 @@ each of these MIGs, and observe the distribution of error as $N$ increases.
 
 Figure \ref{fig:vanillaref} shows the reference variances of every MIG from this
 experiment (a total of 27600 individual MIG calculations). Reference variance is
-tightly clustered around 1, which demonstrates that the use of a priori
+tightly clustered around 1, which demonstrates that the use of apriori
 covariance in the MIG calculations is consistent with the errors involved in the
 perturbation of $\Pimg$.
 
@@ -594,7 +593,7 @@ It is desirable that this quartic polynomial $d(\lambda)$ have no
 local minima, but only a single, global minimum. Equivalently, the
 cubic derivative should have a single real root and two complex
 roots. Unfortunately, there can be degenerate arrangements of image
-rays with three real roots of $d'(\lambda$ and multiple minima for
+rays with three real roots of $d'(\lambda$) and multiple minima for
 $d(\lambda)$.
 
 %% Consider the following bimodal situation: images of a ground area are captured
