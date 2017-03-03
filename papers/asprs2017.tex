@@ -4,6 +4,7 @@
 %\usepackage{amsmath}
 \usepackage{graphicx} % for png figures
 \usepackage{subcaption} % for subfigures
+\usepackage{xfrac} % for sfrac (slanted inline fractions)
 %\usepackage{amsaddr} % addresses up front
 %\usepackage{amssymb, amsmath, bm, nameref}
 \pagenumbering{gobble} % no page numbers
@@ -126,7 +127,7 @@ points, but here we are concerned with just one point. Also, MIG is capable of
 appropriately handling known correlations, but for our purposes we assume full
 independence between all images and measurements.
 
-The goal is therefore to determine ground location that minimizes the weighted
+The goal is therefore to determine the ground location that minimizes the weighted
 sum of image measurement and sensor parameter deviations using non-linear least
 squares. Let $\grnd = [X, Y, Z]'$ be the a priori position of the ground point
 being estimated.  $\imgmeas = [x_{i}, y_{i}]'$ is the measurement of the ground
@@ -136,14 +137,11 @@ and sensor parameters are related through the sensor's ground to image function
 $\imgmeas = \pmb{g_i}(\sensmeas, \grnd)$.  Let $\pmb{F_{i}}$ be the measurement
 residual function for the $i$th image, which is the difference between the
 projected ground point and image measurement:
-
 \begin{equation*}
 \pmb{F_{i}}(\sensmeashat, \grndhat,\imgmeashat)=\pmb{g_i}(\sensmeashat,\grndhat)-\imgmeashat,
 \end{equation*}
-
 where $\imgmeashat$, $\sensmeashat$, and $\grndhat$ are measured quantities
 related to the predicted quantities by:
-
 \begin{equation*}
 \begin{split}
 \imgmeashat = \imgmeas + \imgnu\\
@@ -151,32 +149,26 @@ related to the predicted quantities by:
 \grndhat    = \grnd + \grndupdate
 \end{split}
 \end{equation*}
-
 $\imgnu$ and $\sensnu$ are differences in the predicted and measured image
 coordinates and sensor parameters respectively.  $\grndupdate$ will be the
 correction to the ground point, for which we are solving.
 
 Taylor expanding $\pmb{F_{i}}$ about the predicted values gives
-
 \begin{equation} \label{taylor_eq}
 \pmb{F_{i}}(\sensmeashat, \grndhat, \imgmeashat) = 
 \pmb{F_{i}}(\sensmeas, \grnd, \imgmeas) + \Fimgpartials\imgnu + \Fsenspartials\sensnu + \Fgrndpartials\grndupdate = 0
 \end{equation}
-
 Sensor parameter partials are denoted by $A_{i}^p = \Fsenspartials$, and the
 sensor ground partials by $B_{i} = \Fgrndpartials$.  The partials with respect
 to image coordinates are ${\Fimgpartials=-I_{2 \times 2}}$, the negative of the
 $2 \times 2$ identity matrix.  Substituting $A_{i}$ and $B_{i}$ into
 (\ref{taylor_eq}) and rearranging terms gives:
-
 \begin{equation} \label{linear_eq}
 \begin{split}
 -\imgnu + A_{i}\sensnu + B_{i}\grndupdate = \imgmeas - \pmb{g_i}(\sensmeas, \grnd) = \pmb{f_{i}}
 \end{split}
 \end{equation}
-
 Stacking up equations for each measurement into one vector equation gives
-
 \begin{equation}\label{stacked_eq}
 -\pmb{\nu^x} + A\pmb{\nu^p} + B\grndupdate = \pmb{f}
 \end{equation}
@@ -188,13 +180,10 @@ subject to the constraints in (\ref{stacked_eq}).
 $W^x$ and $W^p$ are inverses of the measurement covariance matrix and sensor
 parameter covariance matrix respectively. Minimizing $\Phi$ using Lagrange multipliers 
 to account for the constraint specified in (\ref{stacked_eq}) results in the following normal equations:
-
 \begin{equation} \label{normal_eq}
 B' W B\pmb{\Delta} = B' W \pmb{f}
 \end{equation}
-
 where $W$ is the sensor parameter and image measurement error combined into a single weight matrix:
-
 \begin{equation}\label{weight_eq}
 W = ({W^x}^{-1} + A {W^p}^{-1} {A}')^{-1}
 \end{equation}
@@ -222,45 +211,46 @@ To understand how $C^g$ depends on the number of images, we establish and upper
 bound on $C^g$ and show that the variance of each component decays as $1/N$
 where $N$ is the number of images.  As a metric for comparing covariance
 matrices, we use the volume of the standard ellipsoid $(X - \bar{X})'C^g(X -
-\bar{X}) = 1$.  Note that we do not need to differentiate between rotated identical
-ellipsoids that differ by rotation.  The volume of an ellipsoid is $1/4 \pi abc$, 
-where $a$, $b$, and $c$ are the lengths of the three axes of the ellipsoid, which 
-are the eigenvalues $\lambda_1$, $\lambda_2$, and $\lambda_3$ of the covariance matrix
-(We use the convention $\lambda_1 \le \lambda_2 \le \lambda_3$, and
-since covariance matrices are positive definite, $\lambda_1 > 0$).  Using
-the fact that the determinant of a positive definite matrix is the product of
-the eigenvalues we have: $C_1 \ge C_2 \leftrightarrow |C_1| \ge |C_2|$
+\bar{X}) = 1$.  Note that we do not need to differentiate between
+identically-sized ellipsoids that differ only by rotation.  The volume of an
+ellipsoid is $\sfrac{\pi}{4}\cdot abc$, where $a$, $b$, and $c$ are the lengths of the three
+axes of the ellipsoid, which are the eigenvalues $\lambda_1$, $\lambda_2$, and
+$\lambda_3$ of the covariance matrix (We use the convention $\lambda_1 \le
+\lambda_2 \le \lambda_3$, and since covariance matrices are positive definite,
+$\lambda_1 > 0$).  Using the fact that the determinant of a positive definite
+matrix is the product of its eigenvalues we define: $C_1 \ge C_2 \leftrightarrow
+|C_1| \ge |C_2|$
 
 Using (\ref{covariance_eq}), and the properties of the determinant, we have $|C|
 = |B'WB|^{-1}$. Since we want an upper bound on $|C|$, we need to demonstrate a
 lower bound for $|B'WB|$. Recall the initial assumption of independence of all
-image measurements sensor parameters for different images.  This means the image
+image measurements, and sensor parameters for different images.  This means the image
 measurement covariance matrix $C^m$ and sensor parameter covariance matrix $C^p$
 are block diagonal. Thus we have:
-
 \begin{eqnarray}\label{btwb_eq}
 B'WB & = & \sum_{i}B'_i(C^m_i + A_iC^p_iA'_i)^{-1}B_i \nonumber \\
      & = & \sum_{i}B'_iW_iB_i
 \end{eqnarray}
-
+%
 where $W_i = (C^m_i + A_iC^p_iA^T_i)^{-1}$.
 
 If $A$ is an $n\times n$ matrix then let $\lambda_i(A)$ be the $i$th smallest
-eigenvalue of $A$.  In (\ref{btwb_eq}) each image contributes a $\btwbi$ term to
-the sum. Because $W_i$ is $2\times 2$ and $B_i$ is $2\times 3$, each $\btwbi$ is
-$3\times 3$ and only rank 2. The two eigenvectors with nonzero eigenvalues of $\btwbi$ are the
-rows of $B_i$ (the ground-space projections of the line and sample directions in
-image space), and the eigenvector corresponding to the zero eigenvalue $\lambda_1(\btwbi)$ is their
-cross-product, the image measurement ray.
+eigenvalue of $A$.  In (\ref{btwb_eq}) each image contributes a term of $\btwbi$
+to the sum. Because $W_i$ is $2\times 2$ and $B_i$ is $2\times 3$, each $\btwbi$
+is $3\times 3$ and, only rank 2. The two eigenvectors of $\btwbi$ with nonzero
+eigenvalues are the rows of $B_i$ (the ground-space projections of the line and
+sample directions in image space), and the eigenvector corresponding to the
+eigenvalue $\lambda_1(\btwbi)=0$ is their cross-product, the line of sight ray
+projecting from the image measurement.
 
-Assume two images such that measurement rays from images and measurements
-$i$ and $j$ are identical/parallel. Call that vector $l$. Then 
-
+Assume two images and measurements $i$ and $j$ such that the rays from those
+measurements are identical/parallel. Call that vector $l$. Then
+%
 \begin{eqnarray*}
 l'(\btwbi+\btwbj)l & = & l'\btwbi l + l'\btwbj l \\
                    & = & 0 + 0
 \end{eqnarray*}
-Thus $l$ is also a trivial eigenvalue of $\btwbi+\btwbj$, and $\lambda_1(\btwbi+\btwbj)=0$.
+Thus $l$ is also a trivial eigenvector of $\btwbi+\btwbj$, and $\lambda_1(\btwbi+\btwbj)=0$.
 
 However, since in reality no two images will be collected with perfectly
 parallel image rays, we can safely assume that for all $i\ne j\in 1\ldots n$,
@@ -276,7 +266,7 @@ In particular, for $k=l=1$,
 \begin{equation}\label{HJ_4_3_1}
 \lambda_1(\btwbi)+\lambda_1(\btwbj) \le \lambda_1(\btwbi+\btwbj)
 \end{equation}
-
+%
 Using (\ref{HJ_4_3_1}), we can prove the following theorem:
 
 \begin{theorem} \label{theorem_1}
@@ -288,7 +278,7 @@ Using (\ref{HJ_4_3_1}), we can prove the following theorem:
 
 This can be proven using strong induction.  We will outline the proof for even
 $n$.  First notice that $\lambda_1(B'_1W_1B_1 + B'_2W_2B_2) \geq \delta$ by
-definition.  Assume $\lambda_1(\sum^k_i B'_iW_iB_i) \geq \frac{k\delta}{2}$ for
+definition.  Assume from induction that $\lambda_1(\sum^k_i B'_iW_iB_i) \geq \frac{k\delta}{2}$ for
 all even $k < n$ and $\lambda_1(\sum^k_i B'_iW_iB_i) \geq
 \frac{(k-1)\delta}{2}$ for all odd $k < n$.  Then
 \begin{eqnarray*}
