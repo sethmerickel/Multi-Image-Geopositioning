@@ -269,10 +269,10 @@ $\lambda_1(\btwbi+\btwbj)>0$. Let
 \delta = \min_{i\ne j}\lambda_1(\btwbi+\btwbj) > 0
 \end{equation}
 
-\cite{H_AND_J} gives a useful property of eigenvalues of positive semidefinite
-matrices $A$ and $B$: for $j\le i,
-\lambda_{i-j+1}(A)+\lambda_j(B)<=\lambda_i(A+B)$.
-In particular, for $j=i=1$,
+Horn and Johnson in \cite{H_AND_J} give a useful property of eigenvalues of positive semidefinite
+matrices $A$ and $B$: for $l\le k,
+\lambda_{k-l+1}(A)+\lambda_l(B)<=\lambda_k(A+B)$.
+In particular, for $k=l=1$,
 \begin{equation}\label{HJ_4_3_1}
 \lambda_1(\btwbi)+\lambda_1(\btwbj) \le \lambda_1(\btwbi+\btwbj)
 \end{equation}
@@ -320,10 +320,10 @@ scene content is irrelevant.)  From \cite{MIN} we have sensor models from 10
 Worldview-1 images which all view the ground location 36N 117.5W 1700mHAE
 (WGS84). This point is set as Ground Truth. (The sensor model used in this study
 is the SOCET GXP \cite{SGXP} Worldview sensor model.) We then synthetically
-extend the set of real sensor models by randomly perturbation position and
+extend the set of real sensor models by randomly perturbing position and
 orientation adjustable parameters with very large corrections. Using this random
 perturbation technique, we generate 99 perturbations for each of the 10
-originals, for a total of 1000 sensor models.
+original images, for a total of 1000 sensor models.
 
 The simulated set of 1000 images thus constructed is considered the Truth set of
 sensor models. The sensor model's ground to image function is used to project
@@ -335,14 +335,14 @@ ground function) at the truth point in ground space. Let this idealized set of
 images and measurements be $\Iimg$.
 
 Once the ideal bundle $\Iimg$ is assembled, an image bundle with realistic
-errors can be constructed by perturbing sensor models from $\Iimg$ with a
+errors can be constructed by perturbing sensor model parameters from $\Iimg$ with a
 controlled amount of error (randomly sampled from a known distribution), to
 obtain perturbed image set $\Pimg$. Nine position/velocity/ac\-cel\-eration
 parametrs are given $\sigma = 1{\mathrm m}, 0.1{\mathrm m}/{\mathrm s},
 0.01{\mathrm m}^2/{\mathrm s}^2$, and 9 attitude/rate/acceleration parameters
 are given
 $\sigma=5\mu\mathrm{rad}, \sigma=0.5\mu\mathrm{rad}, \sigma=0.05\mu\mathrm{rad}$.
-This model yields about CE90=6-8m of error for the original 10 images, depending
+This model yields a CE90 of about 6-8m for the original 10 images, depending
 on obliquity. Any subset of images of $\Pimg$ (along with the truth measurements
 on those images) can be used as a realistic input to least-squares MIG. A priori
 covariance input to the MIG is the same error model that was used to perturb
@@ -387,7 +387,7 @@ covariance in the MIG calculations is consistent with the errors involved in the
 perturbation of $\Pimg$.
 
 Figure \ref{fig:vanillaxyz} shows the average of MIG errors in the X, Y, and Z
-dimensions. Each point represents an average over $k=100$ MIGS. Because errors
+dimensions. Each point represents an average over $k=100$ MIGs. Because errors
 in positive and negative directions cancel each other out, this graph shows the
 amount of bias in the MIG calculations across $N$-subsets. For all $N=1000$
 images of $\Pimg$, the MIG solution differs from ground truth by (-0.0049,
