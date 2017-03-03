@@ -280,33 +280,44 @@ In particular, for $j=i=1$,
 Using (\ref{HJ_4_3_1}), we can prove the following theorem:
 
 \begin{theorem} \label{theorem_1}
-	 For $\delta > 0$ if $\lambda_1(B'_iW_iB_i + B'_jW_jB_j) \geq \delta$
+	 For $\delta > 0$ if $\lambda_1(B^T_iW_iB_i + B^T_jW_jB_j) \geq \delta$
          for all $i, j = 1, \dots, n$ $i \ne j$ then $\lambda_1(\sum_i
-         B'_iW_iB_i) \geq \frac{n\delta}{2}$ for $n$ even and
+         B^T_iW_iB_i) \geq \frac{n\delta}{2}$ for $n$ even and
          $\frac{(n-1)\delta}{2}$ for $n$ odd
 \end{theorem}
 
 This can be proven using strong induction.  We will outline the proof for even
-$n$.  First notice that $\lambda_1(B'_1W_1B_1 + B'_2W_2B_2) \geq \delta$ by
-definition.  Assume $\lambda_1(\sum^k_i B'_iW_iB_i) \geq \frac{k\delta}{2}$ for
-all even $k < n$ and $\lambda_1(\sum^k_i B'_iW_iB_i) \geq
+$n$.  First notice that $\lambda_1(B^T_1W_1B_1 + B^T_2W_2B_2) \geq \delta$ by
+definition.  Assume $\lambda_1(\sum^k_i B^T_iW_iB_i) \geq \frac{k\delta}{2}$ for
+all even $k < n$ and $\lambda_1(\sum^k_i B^T_iW_iB_i) \geq
 \frac{(k-1)\delta}{2}$ for all odd $k < n$.  Then
 \begin{eqnarray*}
-\lambda_1(\sum^n_iB'_iW_iB_i) &=&\lambda_1(\sum^{n-2}_i B'_iW_iB_i + B'_{n-1}W_{n-1}B_{n-1} +  B'_{n}W_{n}B_{n})\\
-&\geq&\lambda_1(\sum^{n-2}_i B'_iW_iB_i) +  \lambda_1(B'_{n-1}W_{n-1}B_{n-1} + B'_{n}W_{n}B_{n})\\
+\lambda_1(\sum^n_iB^T_iW_iB_i) &=&\lambda_1(\sum^{n-2}_i B^T_iW_iB_i + B^T_{n-1}W_{n-1}B_{n-1} +  B^T_{n}W_{n}B_{n})\\
+&\geq&\lambda_1(\sum^{n-2}_i B^T_iW_iB_i) +  \lambda_1(B^T_{n-1}W_{n-1}B_{n-1} + B^T_{n}W_{n}B_{n})\\
 &\geq&\frac{(n-2)\delta}{2} + \delta = \frac{n\delta}{2}
 \end{eqnarray*}
 
 The first inequality follows from (\ref{HJ_4_3_1}) and the second
 inequality follows from the induction hypothesis. $\qed$
 
-We can now define the matrix $M(N) = \frac{(N-1)\delta}{2}I_{3 \times 3}$ where 
-$N$ is the number of images, and $I_{3\times 3}$ is the $3 \times 3$ identity matrix. The eigenvalues of $M(N)$
-are $\frac{(N-1)\delta}{2}$ which is less than or equal to the smallest
-eigenvalue of $\sum^N_i B'_iW_iB_i$ by theorem \ref{theorem_1}.  This means
-$|B'WB| \geq |M(N)|$ or $|C| \leq |M(N)^{-1}|$ where $M(N)^{-1} =
-\frac{2}{(N-1)\delta}I_{3\times 3}$ which shows that the variance of the
-estimated ground point decreases as $1/N$.
+Our goal is to find a covariance matrix $U(N)$, where $N$ is the number of images, which is an upper bound on the 
+estimated ground point covariance $C^g$ and show that the variance (diagonals) of
+$U(N)$ decrease as $1/N$. Once we determine $U(N)$ we can conclude that the variances
+in $C^g$ will decrease at least as fast as $1/N$.  We begin with $\delta$ defined by (\ref{w_assumption_eq})
+and use the previous theorem (\ref{theorem_1}) to state $\lambda_1(\sum_i^NB_i^TW_iB_i) \geq \frac{N\delta}{2}$.  
+Next, define the matrix $M(N) = \frac{(N-1)\delta}{2}I_{3 \times 3}$,
+where $I_{3\times 3}$ is the $3 \times 3$ identity matrix.
+We will see that the upper bound $U(N)$ we are looking for is $M(N)^{-1}$.
+The eigenvalues of $M(N)$ are all equal to $\frac{(N-1)\delta}{2}$,
+which are all less than or equal to the smallest eigenvalue of $\sum^N_i B'_iW_iB_i$ by theorem \ref{theorem_1}.
+This implies that the product of the eigenvalues of $B^TWB$ is larger than the product
+of the eigenvalues of $M(N)$ which equals $(\frac{(N - 1)\delta}{2})^3$.  It follows that
+$|B^TWB| \geq |M(N)|$ or $|(B^TWB)^{-1}| \leq |M(N)^{-1}|$, using the fact that
+the matrices are positive definite so the determinants are positive. Finally, we see that
+$U(N) = M(N)^{-1} = \frac{2}{(N-1)\delta}I_{3\times 3}$ is an upper bound on the 
+ground point estimate covariance $C^g$ and that the variances (diagonals) of $U(N)$ 
+decrease as $1/N$.  We conclude that the variances of $C^g$ must also decrease at 
+least as $1/N$.
 
 \subsection{\label{simulation}Simulation with Synthetic Imagery}
 In this section we construct a large testbed of simulated/\-syn\-the\-tic imagery, and
