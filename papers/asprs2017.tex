@@ -1,5 +1,5 @@
 \documentclass[10pt]{amsart}
-\usepackage[total={6.5in,9in}]{geometry}
+\usepackage[total={6.5in,9in},centering]{geometry}
 %\documentclass{article}
 %\usepackage{amsmath}
 \usepackage{graphicx} % for png figures
@@ -234,10 +234,10 @@ measurement covariance matrix $C^m$ and sensor parameter covariance matrix $C^p$
 are block diagonal. Thus we have:
 \begin{eqnarray}\label{btwb_eq}
 B'WB & = & \sum_{i}B'_i(C^m_i + A_iC^p_iA'_i)^{-1}B_i \nonumber \\
-     & = & \sum_{i}B'_iW_iB_i
+     & = & \sum_{i}\btwbi
 \end{eqnarray}
 %
-where $W_i = (C^m_i + A_iC^p_iA^T_i)^{-1}$.
+where $W_i = (C^m_i + A_iC^p_iA'_i)^{-1}$.
 
 If $A$ is an $n\times n$ matrix then let $\lambda_i(A)$ be the $i$th smallest
 eigenvalue of $A$.  In (\ref{btwb_eq}) each image contributes a term of $\btwbi$
@@ -303,14 +303,14 @@ $$\lambda_1(\btwbone + \btwbtwo) \geq \delta = \frac{n\delta}{2}$$ For $n=3$:
 The pattern above illustrates the nature of the inductive step. For $n$ even,
 \begin{eqnarray*}
 \lambda_1(\sum^n_{i=1}\btwbi) &=&\lambda_1(\btwbone + \btwbtwo + \sum_{i=3}^n \btwbi)\\
-&\geq&\lambda_1(\btwbone+\btwbtwo) + \lambda_1(\sum_{i=3}^n B^T_iW_iB_i) \\
+&\geq&\lambda_1(\btwbone+\btwbtwo) + \lambda_1(\sum_{i=3}^n \btwbi) \\
 &\geq&\delta + \frac{(n-2)\delta}{2} \\
 & = & \frac{n\delta}{2}
 \end{eqnarray*}
 %
 The proof for $n$ odd is similar. \qed
 
-\ \\
+\vskip\baselineskip
 
 Since Theorem 1 guarantees that the smallest eigenvalue
 $\lambda_1(\sum_i\btwbi)\geq\sfrac{(n-1)\delta}{2}$, the other eigenvalues are
@@ -370,7 +370,7 @@ Let $\Pimg$ be the set of 1000 perturbed images. For each
 $n\in\{4,5,...$ $100,105,...995\}$, we randomly sample $k=100$ subsets of size
 $n$ images from $\Pimg$. Least-squares MIG is used to estimate the geolocation
 of the truth point using each $n$-image subset. Because we know the truth ground
-point, the trivial intersection of $\Iimg$, we can compute the actual error of
+point (the trivial intersection of $\Iimg$), we can compute the actual error of
 each of these MIGs, and observe the distribution of error as $n$ increases.
 
 \begin{figure}
@@ -429,7 +429,11 @@ In order to demonstrate the $1/\sqrt{n}$ behavior of MIG error, Figure
 curves demonstrates the thesis of this paper, that MIG follows the Law of Large
 Numbers, and exhibits error that decreases as $1/\sqrt n$.
 
-
+In an earlier study \cite{FRESNO}, MIG experiments were also run in a variety of
+variable conditions: images having different error models rather than all the
+same, increasing amounts of measurement error, restricting image subsets to
+certain convergence angle/obliquity, and in all cases, the MIG responded to the
+variations in intuitive ways, and $\sfrac{1}{\sqrt N}$ behavior was evident.
 
 
 \section{Hourglassing\label{hourglassing}}
@@ -680,15 +684,23 @@ Hourglass error estimation. The Hourglass error estimation has more spread than 
 \end{figure}
 
 \section{Conclusion}
-In conclusion, we conclude.
+We have shown with both theory and simulation with real/augmented data, that
+least-squares Multi-Image Geopositioning (MIG) yields output ground covariance
+which diminishes as $1/n$, for increasing numbers of images $n$. An empirical
+geolocation technique called Hourglassing is introduced, which needs no apriori
+sensor covariance, and which is shown to behave comparably to MIG, including an
+error estimation procedure that captures uncertainty from the distribution of
+image rays itself.
 
-
+Using techniques such as these, ever-growing stores of satellite imagery can be
+exploited to yield increasingly high accuracy geolocation.
 
 
 
 \begin{thebibliography}{99} % 2-digit reference nums
 
-\bibitem{MANUAL}ASPRS, 20xx {\em Manual of Photogrammetry}, 9th ed., pp ??.
+\bibitem{MANUAL}McGlone, J.~Chris (Ed.), 2013. {\em Manual of Photogrammetry},
+  6th ed.
 
 \bibitem{LLN} Casella, George, Roger L. Berger, 1990. {\em Statistical
   Inference}, Brooks/Cole, Belmont CA, pp. 214-20.
