@@ -42,8 +42,16 @@
 
 \title[Small Geopositioning Error from Many Images]{}
 %{Asymptotically Small Geopositioning Error from Large Sets of Imagery}
-\author[Settergren]{}%{\bf \rm{Reuben Settergren}}
-\author[Merickel]{}%{Seth Merickel}
+\author[Settergren]{}%{\bf \rm{Reuben Settergren}} 
+
+\author[Merickel]{}%{Seth Merickel} 
+
+\thanks{Thanks to Digital Globe for use of the 10 Worldview-1 images from which
+  the testbed in section \ref{simulation} was synthesized.}
+
+\thanks{Special thanks also to Tim Nagy, whose original idea behind
+  'Hourglassing' he encouraged us to develop.}
+
 \maketitle
 
 
@@ -208,7 +216,7 @@ experiments in section \ref{simulation}, the partial derivatives were so stable,
 only one iteration was necessary; the 2nd iteration yielded only negligible
 correction.)
 
-\subsection{MIG Covariance}
+\subsection{MIG Covariance}\label{mig_covariance}
 From the normal equations (\ref{normal_eq}) it is straightforward to show that
 the covariance of the ground point estimate is:
 \begin{equation} \label{covariance_eq}
@@ -425,7 +433,7 @@ positive quantities. Figure \ref{fig:vanilla_pred_meas}a shows the average
 predicted and measured CE90/LE90 for each $n$ across the $k=100$ MIGs for that
 $n$. To clarify the rate of convergence and separation of the curves, a
 logarithmic scale is used. (The measured errors are adjusted with a finite
-population correction of $\sqrt{(1000-n)/(1000-1)}$ \cite{FPC}. The deviation of
+population correction of $\sqrt{(1000-1)/(1000-n)}$ \cite{FPC}. The deviation of
 the measured errors from prediction near 1000 is believed to be due to
 limitations of the finite population correction when applied to a 90\% statistic
 rather than a 1-sigma standard deviation)
@@ -633,23 +641,26 @@ number of images is negligible, and in any case it can be detected for manual
 review.
 
 
-\subsection{Error Estimation}
+\subsection{Hourglass Error Estimation: Self-Projected Covariance}
 Review of Figures \ref{fig:vanilla_pred_meas}--\ref{fig:vanilla_pred_meas_sqrtn}
 suggests an empirical meth\-od of error estimation for Hourglassing. Predicted
 error decreases very predictably as $1/\sqrt n$. So an alternative method for
-estimating the error of a MIG with $n$ images would be to subsample $M \ll n$
-images many times, compute the sample covariance $C_M$ of the $M$-MIGs, and
-because of the $1/\sqrt n$ behavior (which is $1/n$ in variance space), and
+estimating the error of a MIG with $n$ images would be to subsample $m \ll n$
+images many times, compute the sample covariance $C_m$ of the $m$-MIGs, and
+because of the $1/n$ behavior proven in section \ref{mig_covariance}, and
 using a finite population correction, predict the error of the $n$-MIG to
-be $$C_n=C_M\frac{M}{n}\cdot\frac{n-1}{n-M}$$
-
+be 
+\begin{equation}\label{self_proj_cov}
+C_n=C_m\frac{m}{n}\cdot\frac{n-1}{n-m}
+\end{equation}
+%
 This allows estimation of error apart from the output covariance of the $n$-MIG
 (or even of any of the $m$-MIG). There's not much point to this for MIG, since
-output covariance is a natural by-product of the MIG algorithm. But for
-Hourglassing, this provides a method of error estimation which requires no
-apriori error information, simply calculation of additional, smaller Hourglass
-calculations on many subsamples, and computation and scaling of the sample
-covariance of the resulting set of geolocations.
+theoretically correct output covariance is a natural by-product of the MIG
+algorithm. But for Hourglassing, this provides a method of error estimation
+which requires no apriori error information, but only calculation of sample
+covariance of additional sub-sampled Hourglass calculations. We call this error
+estimation techniqe `Self-Projected Covariance'.
 
 The fundamental principle behind this error estimation technique, is that
 apriori error information is not needed for each image in the bundle, because
@@ -661,39 +672,62 @@ apriori and aposteriori covariance, and reference variance as a consistency
 check, is most appropriate. But for large enough collections of images, the
 distribution of image rays is a reliable summary of the error of the process.
 
-\subsection{\label{hsimulation}Error Estimation Simulated Results}
-To evaluate this empirical method of error estimation for Hourglassing, a subset
-of $n=100$ images from $\Pimg$ were chosen, and an Hourglass-geolocation
-computed for them. Subsets of $m=n/4$ were sampled from the $n$-set, $k=100$
-times, and an Hourglass-geolocation is computed for each $m$-subset. 3x3 sample
-covariance was computed for those $k$ ground points, and then scaled by
-$1/(n/m)=m/n$ because of the $1/\sqrt{n}$ effect, and corrected also by a FPC
-factor of $(n-1)/(n-m)$, to yield the covariance estimate for the
-$n$-Hourglass. A MIG was also computed for the same $n$-subset, and its output
-covariance computed for reference. This experiment was repeated $r=100$ times.
+\subsection{\label{hsimulation}Self-Projected Covariance Simulated Results}
+To evaluate this empirical method of error estimation for Hourglassing, the
+following experiment was conducted: for the basic iteration, a subset of $n$
+images from $\Pimg$ were chosen, and an Hourglass-geolocation computed for
+them. Subsets of size $m=n/4$ were sampled from the $n$-set, $k=100$ times, and
+an Hourglass-geolocation is computed for each $m$-subset. 3x3 sample covariance
+was computed for those $k$ ground points, and then projected into an error
+estimate for the $n$ images using (\ref{self_proj_cov}). For reference, the
+$n$-subset was also input to MIG, and the $m$-sets were also input to MIG to
+provide another self-projected covariance estimate. This basic process was
+repeated $r=100$ times each, for $n=100, 200$ and 400.
 
-Figure \ref{fig:mig_vs_hourglass_var} shows the variance of X from MIG vs
-Hourglass error estimation. The Hourglass error estimation has more spread than MIG.
+Figure \ref{fig:mig_vs_hourglass_var} compares self-projected covariance from
+MIG and Hourglass points on the $m$-subsamples. The left graph shows $x$
+variance, and the right shows $z$ variance ($y$ is omitted from the horizontal
+graph because it is virtually identical to $x$ and just makes the graph harder
+to read). Self-projected variance from MIG and Hourglass points are remarkably
+similar, with Hourglass self-projected variance trending a litle higher (above
+the identity line $y=x$). MIG variances from \ref{mig_covariance} are much less
+variable; the vertical lines show the magnitude of MIG variance for the
+$n$-sets. Although self-projected covariance has more variability, it is
+clustered around the correct value.
+%
+
+%% (INCLUDE THIS YES OR NO?)To evaluate the accuracy of self-projected covariance,
+%% Hourglassing results from Figure \ref{fig:mig_vs_hourglass_var} were each
+%% compared to their error ellipsoids. For each Hourglass geolocation $\grnd$ and
+%% covariance estimate $C$, the 'ellipsoid statistic' is defined as
+%% $$\rho(\grnd)=\grnd'C^{-1}\grnd$$ $\rho$ which has a $\chi^2$ distribution with
+%% 3 degrees of freedom, so we know that $P(\rho)<[1.00,6.25,7.81,11.34] =
+%% [0.20,0.90,0.95,0.99]$ (respectively), so an ideal error estimation process would
+%% yield $\rho<1$, 20\% of the time, etc. (insert percentages table?)
 
 \begin{figure}
 \centering
 \begin{subfigure}{.5\textwidth}
   \centering
-  \includegraphics[width=1.2\linewidth]{fig_self_var_xy.png}
+  \includegraphics[width=1.2\linewidth]{fig_self_var_mig_x.png}
 \end{subfigure}%
 \begin{subfigure}{.5\textwidth}
   \centering
-  \includegraphics[width=1.2\linewidth]{fig_self_var_z.png}
+  \includegraphics[width=1.2\linewidth]{fig_self_var_mig_z.png}
 \end{subfigure}
 \caption{\label{fig:mig_vs_hourglass_var}MIG vs Hourglass estimated
-  variances. From left to right, the clusters represent $n=$400, 200 and 100
-  images.}
+  variances. From left to right, the clusters represent $n=400, 200$ and 100
+  images. X variance only is presented on the left. Y variance is omitted,
+  because it is so similar to X, it would just make the graph more difficult to
+  read. The vertical lines represent the magnitude of variance from a
+  traditional (non-self-projected) MIG}
 \end{figure}
 
 \section{Conclusion}
 We have shown with both theory and simulation with real/augmented data, that
 least-squares Multi-Image Geopositioning (MIG) yields output ground covariance
-which diminishes as $1/n$, for increasing numbers of images $n$. An empirical
+which diminishes as $1/n$ (and linear error estimates such as CE90/LE90 diminish
+as $\sfrac{1}{\sqrt n}$), for increasing numbers of images $n$. An empirical
 geolocation technique called Hourglassing is introduced, which needs no apriori
 sensor covariance, and which is shown to behave comparably to MIG, including an
 error estimation procedure that captures uncertainty from the distribution of
@@ -705,9 +739,6 @@ exploited to yield increasingly high accuracy geolocation.
 
 
 \begin{thebibliography}{99} % 2-digit reference nums
-
-\bibitem{MANUAL}McGlone, J.~Chris (Ed.), 2013. {\em Manual of Photogrammetry},
-  6th ed.
 
 \bibitem{LLN} Casella, George, Roger L. Berger, 1990. {\em Statistical
   Inference}, Brooks/Cole, Belmont CA, pp. 214-20.
@@ -736,12 +767,15 @@ exploited to yield increasingly high accuracy geolocation.
   as well as sample data.
 
 \bibitem{H_AND_J}Horn, Roger, and Charles R. Johnson, 2012. {\em Matrix
-  Analysis}, 2nd ed. Cambridge University Press, p. NNN?
+  Analysis}, 2nd ed. Cambridge University Press, p. 239.
 
 \bibitem{JEONG_SIX}Jeong, Jaehoon, Chansu Yang, Taejung Kim, 2015. Geo-positioning
   accuracy using multiple-satellite images: IKONOS, QuickBird, and KOMPSAT-2
-  Stereo Images, {\em Remote Sensing} 7(4), pp.~4549-64.
+  Stereo Images, {\em Remote Sensing} {\bf 7}(4), pp.~4549-64.
 % http://www.mdpi.com/2072-4292/7/4/4549
+
+\bibitem{MANUAL}McGlone, J.~Chris (Ed.), 2013. {\em Manual of Photogrammetry},
+  6th ed.
 
 \bibitem{LSQRMIG}Mikhail, Edward M., James S.~Bethel, J.~Chris McGlone,
   2001. {\em Modern Photogrammetry}, Wiley, New York.

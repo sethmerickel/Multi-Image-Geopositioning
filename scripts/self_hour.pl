@@ -5,7 +5,7 @@ use Hourglass ':all';
 
 use Getopt::Std;
 %opt = (n=>100, m=>25, k=>100, r=>100);
-getopts('n:k:m:', \%opt);
+getopts('n:k:m:r:', \%opt);
 
 
 select STDOUT; $| = 1; # autoflush
@@ -20,6 +20,7 @@ $truthz =    1700;
 $hsh = parse_projector(0,0,0, @lines);
 
 @all_iids = sort keys %$hsh;
+$gp0 = mkmat(3,1, 1,1,1);
 
 print (join ',', qw(Niter Nbig Nsma Krpt HX HY HZ M_VX VY VZ CXY CXZ CYZ
                                                 FPC_VX VY VZ CXY CXZ CYZ
@@ -31,6 +32,9 @@ for $rpt (1..$opt{r}) {
   $sumx  = $sumy  = $sumz  = 0;
   $sumxx = $sumyy = $sumzz = 0;
   $sumxy = $sumxy = $sumyz = 0;
+  $mumx  = $mumy  = $mumz  = 0;
+  $mumxx = $mumyy = $mumzz = 0;
+  $mumxy = $mumxy = $mumyz = 0;
   for $nnn (1..$opt{k}) {
     @some_iids = random_images($opt{m}, @iids);
     $hour = hourglass_poly($hsh, @some_iids);
@@ -42,6 +46,15 @@ for $rpt (1..$opt{r}) {
     $sumy += $y; $sumyy += $y*$y; $sumyz += $y*$z;
     $sumz += $z; $sumzz += $z*$z; $sumxz += $x*$z;
     #print "$nnn,$x,$y,$z\n";
+    @mig = wvmig($hsh, $gp0, @some_iids);
+    ($x,$y,$z) = flatten($mig[0]);
+    $x -= $truthx;
+    $y -= $truthy;
+    $z -= $truthz;
+    $mumx += $x; $mumxx += $x*$x; $mumxy += $x*$y;
+    $mumy += $y; $mumyy += $y*$y; $mumyz += $y*$z;
+    $mumz += $z; $mumzz += $z*$z; $mumxz += $x*$z;
+
   }
   $nnn = $opt{k};
   if ($nnn > 1) {
@@ -54,6 +67,16 @@ for $rpt (1..$opt{r}) {
     $cov = mkmat(3,3, $covxx, $covxy, $covxz,
                       $covxy, $covyy, $covyz,
 	              $covxz, $covyz, $covzz);
+    $movxx = ($mumxx - $mumx*$mumx/$nnn) / ($nnn-1);
+    $movyy = ($mumyy - $mumy*$mumy/$nnn) / ($nnn-1);
+    $movzz = ($mumzz - $mumz*$mumz/$nnn) / ($nnn-1);
+    $movxy = ($mumxy - $mumx*$mumy/$nnn) / ($nnn-1);
+    $movxz = ($mumxz - $mumx*$mumz/$nnn) / ($nnn-1);
+    $movyz = ($mumyz - $mumy*$mumz/$nnn) / ($nnn-1);
+    $mov = mkmat(3,3, $movxx, $movxy, $movxz,
+                      $movxy, $movyy, $movyz,
+	              $movxz, $movyz, $movzz);
+
   }
   @hc = flatten($cov); # raw sample covariance of the k m-samples
   # apply finite population correction factor, no sqrt because in variance
@@ -63,6 +86,8 @@ for $rpt (1..$opt{r}) {
   # apply 1/sqrt(n) projection from m-samples to n-population, except not sqrt
   $cov *= $opt{m} / $opt{n};
   @nc = flatten($cov);
+  $mov *= ($opt{n}-1) / ($opt{n}-$opt{m}) * $opt{m} / $opt{n};
+  @mm = flatten($mov);
 
   $hour = hourglass_poly($hsh, @iids);
   ($x,$y,$z) = (split /,/, $hour)[3,4,6];
@@ -70,7 +95,6 @@ for $rpt (1..$opt{r}) {
   $houry = $y - $truthy;
   $hourz = $z - $truthz;
 
-  $gp0 = mkmat(3,1, 1,1,1);
   ($gp, $cov, $refvar) = wvmig($hsh, $gp0, @iids);
   $migx = $gp->element(1,1) - $truthx;
   $migy = $gp->element(2,1) - $truthy;
@@ -81,7 +105,8 @@ for $rpt (1..$opt{r}) {
 	 $hourx, $houry, $hourz, $hc[0], $hc[4], $hc[8], $hc[1], $hc[2], $hc[5],
                                  $fc[0], $fc[4], $fc[8], $fc[1], $fc[2], $fc[5],
                                  $nc[0], $nc[4], $nc[8], $nc[1], $nc[2], $nc[5],
-	 $migx,  $migy,  $migz,  $mc[0], $mc[4], $mc[8], $mc[1], $mc[2], $mc[5], "\n");
+	 $migx,  $migy,  $migz,  $mc[0], $mc[4], $mc[8], $mc[1], $mc[2], $mc[5], 
+                                 $mm[0], $mm[4], $mm[8], $mm[1], $mm[2], $mm[5], "\n");
 
 }
 
