@@ -26,8 +26,13 @@
 \newcommand{\Fimgpartials}{\frac{\partial{\pmb{F_{i}}}}{\partial{\imgmeas}}}
 \newcommand{\Fgrndpartials}{\frac{\partial{\pmb{F_{i}}}}{\partial{\grnd}}}
 \newcommand{\Fsenspartials}{\frac{\partial{\pmb{F_{i}}}}{\partial{\sensmeas}}}
-\newcommand{\btwbi}{B^T_iW_iB_i}
-\newcommand{\btwbj}{B^T_jW_jB_j}
+\newcommand{\btwbi}{B'_iW_iB_i}
+\newcommand{\btwbii}{B'_{i+1}W_{i+1}B_{i+1}}
+\newcommand{\btwbj}{B'_jW_jB_j}
+\newcommand{\btwbone}{B'_1W_1B_1}
+\newcommand{\btwbtwo}{B'_2W_2B_2}
+\newcommand{\btwbthr}{B'_3W_3B_3}
+\newcommand{\btwbfor}{B'_4W_4B_4}
 
 \newtheorem{theorem}{Theorem}
 
@@ -237,7 +242,7 @@ where $W_i = (C^m_i + A_iC^p_iA^T_i)^{-1}$.
 If $A$ is an $n\times n$ matrix then let $\lambda_i(A)$ be the $i$th smallest
 eigenvalue of $A$.  In (\ref{btwb_eq}) each image contributes a term of $\btwbi$
 to the sum. Because $W_i$ is $2\times 2$ and $B_i$ is $2\times 3$, each $\btwbi$
-is $3\times 3$ and, only rank 2. The two eigenvectors of $\btwbi$ with nonzero
+is a rank-deficient $3\times 3$. The two eigenvectors of $\btwbi$ with nonzero
 eigenvalues are the rows of $B_i$ (the ground-space projections of the line and
 sample directions in image space), and the eigenvector corresponding to the
 eigenvalue $\lambda_1(\btwbi)=0$ is their cross-product, the line of sight ray
@@ -253,15 +258,25 @@ l'(\btwbi+\btwbj)l & = & l'\btwbi l + l'\btwbj l \\
 Thus $l$ is also a trivial eigenvector of $\btwbi+\btwbj$, and $\lambda_1(\btwbi+\btwbj)=0$.
 
 However, since in reality no two images will be collected with perfectly
-parallel image rays, we can safely assume that for all $i\ne j\in 1\ldots n$,
+parallel image rays, we can safely assume that for all $i\ne j\in1\ldots n$, 
 $\lambda_1(\btwbi+\btwbj)>0$. Let 
 \begin{equation}\label{w_assumption_eq}
-\delta = \min_{i\ne j}\lambda_1(\btwbi+\btwbj) > 0
+\delta = \min_{i}\lambda_1(\btwbi+\btwbii) > 0
 \end{equation}
+be the smallest $\lambda_1$ of the sum of {\em consecutive} $\btwbi$. Note that
+even for an infinite collection of images, it is possible for $\delta>0$, with
+care taken of the ordering of the images. For instance, consider a fixed stereo
+collection geometry, with arbitrarily many images collected from the exact
+position and orientation of the left and right camera stations. As long as the
+images are ordered alternating left, right, then
+\begin{eqnarray*}
+\delta&=&\min_{i}\lambda_1(\btwbi+\btwbii)\\
+      &=&\lambda_1(\btwbone+\btwbtwo)>0
+\end{eqnarray*}
 
 Horn and Johnson in \cite{H_AND_J} give a useful property of eigenvalues of positive semidefinite
 matrices $A$ and $B$: for $l\le k,
-\lambda_{k-l+1}(A)+\lambda_l(B)<=\lambda_k(A+B)$.
+\lambda_{k-l+1}(A)+\lambda_l(B)\leq\lambda_k(A+B)$.
 In particular, for $k=l=1$,
 \begin{equation}\label{HJ_4_3_1}
 \lambda_1(\btwbi)+\lambda_1(\btwbj) \le \lambda_1(\btwbi+\btwbj)
@@ -270,62 +285,46 @@ In particular, for $k=l=1$,
 Using (\ref{HJ_4_3_1}), we can prove the following theorem:
 
 \begin{theorem} \label{theorem_1}
-	 For $\delta > 0$ if $\lambda_1(B^T_iW_iB_i + B^T_jW_jB_j) \geq \delta$
-         for all $i, j = 1, \dots, n$ $i \ne j$ then $\lambda_1(\sum_i
-         B^T_iW_iB_i) \geq \frac{n\delta}{2}$ for $n$ even and
-         $\frac{(n-1)\delta}{2}$ for $n$ odd
+  For $\delta>0$, if $\lambda_1(\btwbi+\btwbii) \geq \delta$ for all $i= 1\dots
+  n-1$, then $\lambda_1(\sum_i\btwbi) \geq \frac{n\delta}{2}$ for $n$ even and
+  $\geq \frac{(n-1)\delta}{2}$ for $n$ odd.
 \end{theorem}
 
-This can be proven using induction.  We will outline the proof for even
-$n$ starting with the following motivation:
-
-\begin{equation*}
-\begin{aligned}
-&\lambda_1(B^T_1W_1B_1 + B^T_2W_2B_2) \geq \delta \rightarrow \frac{n\delta}{2} \text{, with } n = 2\\
-&\lambda_1(B^T_1W_1B_1 + B^T_2W_2B_2 + B^T_3W_2B_3) \geq \lambda_1(B^T_1W_2B_1 + B^T_2W_2B_2) + \lambda_1(B^T_3W_3B_3) \geq
-\delta + 0 \rightarrow \frac{(n-1)\delta}{2} \text{, with } n = 3\\
-&\lambda_1(B^T_1W_1B_1 + B^T_2W_2B_2 + B^T_3W_3B_3 + B^T_4W_4B_4) \geq \lambda_1(B^T_1W_2B_1 + B^T_2W_2B_2) + \lambda_1(B^T_3W_3B_3 + B^T_4W_4B_4) \geq
-\delta + \delta \rightarrow \frac{n\delta}{2} \text{, with } n = 4\\
-\end{aligned}
-\end{equation*}
-
-\begin{equation*}
-\vdots
-\end{equation*}
-
-The pattern above suggests that the theorem is correct.  To make the argument more 
-formal notice that $\lambda_1(B^T_1W_1B_1 + B^T_2W_2B_2) \geq \delta$ by
-definition.  Assume $\lambda_1(\sum^k_i B^T_iW_iB_i) \geq \frac{k\delta}{2}$ for
-all even $k < n$ and $\lambda_1(\sum^k_i B^T_iW_iB_i) \geq
-\frac{(k-1)\delta}{2}$ for all odd $k < n$.  Then
+This can be proven using induction. A few base cases make the rest of the proof
+clear. For $n=2$:
+$$\lambda_1(\btwbone + \btwbtwo) \geq \delta = \frac{n\delta}{2}$$ For $n=3$: 
 \begin{eqnarray*}
-\lambda_1(\sum^n_iB^T_iW_iB_i) &=&\lambda_1(\sum^{n-2}_i B^T_iW_iB_i + B^T_{n-1}W_{n-1}B_{n-1} +  B^T_{n}W_{n}B_{n})\\
-&\geq&\lambda_1(\sum^{n-2}_i B^T_iW_iB_i) +  \lambda_1(B^T_{n-1}W_{n-1}B_{n-1} + B^T_{n}W_{n}B_{n})\\
-&\geq&\frac{(n-2)\delta}{2} + \delta = \frac{n\delta}{2}
+\lambda_1(\btwbone + \btwbtwo + \btwbthr) & \geq& 
+     \lambda_1(\btwbone+\btwbtwo) + \lambda_1(\btwbthr) \\
+     &\geq& \delta + 0 \\
+     &=& \frac{(n-1)\delta}{2}
 \end{eqnarray*}
+%
+The pattern above illustrates the nature of the inductive step. For $n$ even,
+\begin{eqnarray*}
+\lambda_1(\sum^n_{i=1}\btwbi) &=&\lambda_1(\btwbone + \btwbtwo + \sum_{i=3}^n \btwbi)\\
+&\geq&\lambda_1(\btwbone+\btwbtwo) + \lambda_1(\sum_{i=3}^n B^T_iW_iB_i) \\
+&\geq&\delta + \frac{(n-2)\delta}{2} \\
+& = & \frac{n\delta}{2}
+\end{eqnarray*}
+%
+The proof for $n$ odd is similar. \qed
 
-The first inequality follows from (\ref{HJ_4_3_1}) and the second
-inequality follows from the induction hypothesis. $\qed$
+\ \\
 
-
-Our goal is to find a covariance matrix $U(N)$, where $N$ is the number of images, which is an upper bound on the 
-estimated ground point covariance $C^g$ and show that the variance (diagonals) of
-$U(N)$ decrease as $1/N$. Once we determine $U(N)$ we can conclude that the variances
-in $C^g$ will decrease at least as fast as $1/N$.  We begin with $\delta$ defined by (\ref{w_assumption_eq})
-and use the previous theorem (\ref{theorem_1}) to state $\lambda_1(\sum_i^NB_i^TW_iB_i) \geq \frac{N\delta}{2}$.  
-Next, define the matrix $M(N) = \frac{(N-1)\delta}{2}I_{3 \times 3}$,
-where $I_{3\times 3}$ is the $3 \times 3$ identity matrix.
-We will see that the upper bound $U(N)$ we are looking for is $M(N)^{-1}$.
-The eigenvalues of $M(N)$ are all equal to $\frac{(N-1)\delta}{2}$,
-which are all less than or equal to the smallest eigenvalue of $\sum^N_i B'_iW_iB_i$ by theorem \ref{theorem_1}.
-This implies that the product of the eigenvalues of $B^TWB$ is larger than the product
-of the eigenvalues of $M(N)$ which equals $(\frac{(N - 1)\delta}{2})^3$.  It follows that
-$|B^TWB| \geq |M(N)|$ or $|(B^TWB)^{-1}| \leq |M(N)^{-1}|$, using the fact that
-the matrices are positive definite so the determinants are positive. Finally, we see that
-$U(N) = M(N)^{-1} = \frac{2}{(N-1)\delta}I_{3\times 3}$ is an upper bound on the 
-ground point estimate covariance $C^g$ and that the variances (diagonals) of $U(N)$ 
-decrease as $1/N$.  We conclude that the variances of $C^g$ must also decrease at 
-least as $1/N$.
+Since Theorem 1 guarantees that the smallest eigenvalue
+$\lambda_1(\sum_i\btwbi)\geq\sfrac{(n-1)\delta}{2}$, the other eigenvalues are
+still larger: $\lambda_3 \geq \lambda_2 \geq \lambda_1 \geq
+\sfrac{(n-1)\delta}{2}$. Recall ground covariance $C^g=(\sum_i\btwbi)^{-1}$, so its
+eigenvalues are reciprocal, thus 
+\begin{equation}\label{C_evals}
+\lambda_i(C^g)\leq \frac{2}{(n-1)\delta}
+\end{equation}
+These eigenvalues are the variances of ground uncertainty in the directions of
+the three axes (eigenvectors). Thus we can see that the variance of ground error
+is bounded above by $O(1/n)$. This is equivalent to standard deviation
+decreasing like $O(\sfrac{1}{\sqrt{n}})$, a result which is consistent with the
+sweepingly general applicability of the Law of Large Numbers \cite{LLN}.
 
 \subsection{\label{simulation}Simulation with Synthetic Imagery}
 In this section we construct a large testbed of simulated/\-syn\-the\-tic imagery, and
@@ -368,22 +367,22 @@ covariance input to the MIG is the same error model that was used to perturb
 $\Iimg$ into $\Pimg$.
 
 Let $\Pimg$ be the set of 1000 perturbed images. For each
-$N\in\{4,5,...$ $100,105,...995\}$, we randomly sample $k=100$ subsets of size
-$N$ images from $\Pimg$. Least-squares MIG is used to estimate the geolocation
-of the truth point using each $N$-image subset. Because we know the truth ground
+$n\in\{4,5,...$ $100,105,...995\}$, we randomly sample $k=100$ subsets of size
+$n$ images from $\Pimg$. Least-squares MIG is used to estimate the geolocation
+of the truth point using each $n$-image subset. Because we know the truth ground
 point, the trivial intersection of $\Iimg$, we can compute the actual error of
-each of these MIGs, and observe the distribution of error as $N$ increases.
+each of these MIGs, and observe the distribution of error as $n$ increases.
 
 \begin{figure}
 \includegraphics[width=.7\textwidth]{fig_refvar.png}
-\caption{\label{fig:vanillaref}All reference variances. For every $N$, each of
+\caption{\label{fig:vanillaref}All reference variances. For every $n$, each of
   the $k=100$ MIG generates one pixel in the graph.}
 \end{figure}
 
 \begin{figure}
 \includegraphics[width=.7\textwidth]{fig_avgxyz.png}
 \caption{\label{fig:vanillaxyz}Average Errors in X, Y, and Z. The horizontal
-  lines represent the MIG solution for all $N=1000$ images of $\Pimg$: (-0.0049,
+  lines represent the MIG solution for all $n=1000$ images of $\Pimg$: (-0.0049,
   -0.0330, 0.0378), to which the subset MIGs converge.}
 \end{figure}
 
@@ -396,7 +395,7 @@ each of these MIGs, and observe the distribution of error as $N$ increases.
 \begin{figure}
 \includegraphics[width=.7\textwidth]{fig_pred_meas_sqrtn.png}
 \caption{\label{fig:vanilla_pred_meas_sqrtn}Predicted vs measured CE90/LE90,
-  scaled by $\sqrt{N}$.}
+  scaled by $\sqrt{n}$.}
 \end{figure}
 
 Figure \ref{fig:vanillaref} shows the reference variances of every MIG from this
@@ -408,27 +407,27 @@ perturbation of $\Pimg$.
 Figure \ref{fig:vanillaxyz} shows the average of MIG errors in the X, Y, and Z
 dimensions. Each point represents an average over $k=100$ MIGs. Because errors
 in positive and negative directions cancel each other out, this graph shows the
-amount of bias in the MIG calculations across $N$-subsets. For all $N=1000$
+amount of bias in the MIG calculations across $n$-subsets. For all $n=1000$
 images of $\Pimg$, the MIG solution differs from ground truth by (-0.0049,
 -0.0330, 0.0378) meters. Horizontal lines at those values indicate that as
-$N\rightarrow 1000$, bias across the $k=100$ MIGs for each $N$ converges to that
+$n\rightarrow 1000$, bias across the $k=100$ MIGs for each $n$ converges to that
 error inherent to $\Pimg$.
 
 To avoid positive and negative errors canceling each other out, we switch to
 positive quantities. Figure \ref{fig:vanilla_pred_meas}a shows the average
-predicted and measured CE90/LE90 for each $N$ across the $k=100$ MIGs for that
-$N$. To clarify the rate of convergence and separation of the curves, a
+predicted and measured CE90/LE90 for each $n$ across the $k=100$ MIGs for that
+$n$. To clarify the rate of convergence and separation of the curves, a
 logarithmic scale is used. (The measured errors are adjusted with a finite
-population correction of $\sqrt{(1000-N)/(1000-1)}$ \cite{FPC}. The deviation of
+population correction of $\sqrt{(1000-n)/(1000-1)}$ \cite{FPC}. The deviation of
 the measured errors from prediction near 1000 is believed to be due to
 limitations of the finite population correction when applied to a 90\% statistic
 rather than a 1-sigma standard deviation)
 
-In order to demonstrate the $1/\sqrt{N}$ behavior of MIG error, Figure
+In order to demonstrate the $1/\sqrt{n}$ behavior of MIG error, Figure
 \ref{fig:vanilla_pred_meas}b scales each point from Figure
-\ref{fig:vanilla_pred_meas}a by a factor of $\sqrt N$. The flatness of these
+\ref{fig:vanilla_pred_meas}a by a factor of $\sqrt n$. The flatness of these
 curves demonstrates the thesis of this paper, that MIG follows the Law of Large
-Numbers, and exhibits error that decreases as $1/\sqrt N$.
+Numbers, and exhibits error that decreases as $1/\sqrt n$.
 
 
 
@@ -466,13 +465,13 @@ resolution, we attempt some theoretical underpinnings for this technique that
 will allow a more efficient and precise solution.
 
 \subsection{Computing height of minimum spread\label{poly}}
-Assume two heights $z_{+} > z_{-}$, and assume a set of $N$ 3D lines $L_i$, none
+Assume two heights $z_{+} > z_{-}$, and assume a set of $n$ 3D lines $L_i$, none
 of which is horizontal (without loss of generality, we use horizontal planes. If
 necessary, the ray bundle can be rotated into a coordinate system so that the
 `center' of the ray bundle is vertical). Specify the lines by their
 intersections with the planes of heights $z_\pm$ at points
 $(x_{+}^{i},y_{+}^{i}, z_+)$ and $(x_{-}^{i},y_{-}^{i}, z_-)$, for $i=1\ldots
-N$.
+n$.
 
 Define
 $$x^i(\lambda) = \lambda x^i_+ + (1-\lambda) x^i_-$$
@@ -482,7 +481,7 @@ $(x^i(\lambda), y^i(\lambda), z(\lambda))$ is a point on line $L_i$. Whether the
 point is an interpolation between or extrapolation beyond the $z_\pm$ planes
 depends on whether $0\le\lambda\le 1$ (in either case, we will just use the term
 interpolated). Together, all the points $(x^i(\lambda), y^i(\lambda),
-z(\lambda))$ for $i=1\ldots N$ represent the intersection of lines $L_i$ with
+z(\lambda))$ for $i=1\ldots n$ represent the intersection of lines $L_i$ with
 the plane with height $z(\lambda)$.
 
 Note that the set of all means $(\bar{x}(\lambda),\bar{y}(\lambda),z(\lambda))$
@@ -524,7 +523,7 @@ where
 $$\sigma^2_{x+x+}=var(x^i_+),$$
 $$\sigma^2_{x+y-}=covar(x^i_+, y^i_-),$$ 
 etc. Note in particular that, since all the $\sigma^2$ are functions only of
-constants $x^i_\pm, y^i_\pm$, and $N$, each of the 4 elements of $M(\lambda)$ is
+constants $x^i_\pm, y^i_\pm$, and $n$, each of the 4 elements of $M(\lambda)$ is
 a quadratic function of $\lambda$.
 
 If we denote the determinant of a matrix with $|\cdot|$, the area of the
@@ -583,8 +582,8 @@ that Hourglassing yields very closely the same geolocation as MIG.
 \includegraphics[width=.8\textwidth]{fig_mig_ply_xyz_big.png}
 \caption{\label{fig:mig_vs_hourglass}MIG vs Hourglass errors. All scales are
   meters. Each row is one graph each for X, Y, and Z errors. Above, 700 points
-  are plotted from intersections with $4\le N\le 100$. Below, 26900 points are
-  plotted for $10<N<1000$.}
+  are plotted from intersections with $4\le n\le 100$. Below, 26900 points are
+  plotted for $10<n<1000$.}
 \end{figure}
 
 
@@ -611,12 +610,12 @@ At least we can compute the exact form of $d(\lambda)$, and with standard
 techniques understand clearly whether such a degenerate situation were ever to
 present itself. In our empirical testing in section \ref{hsimulation}, we very
 seldom encountered such a degenerate case. In the 27600 Hourglassing
-computations, 26 degenerate cases were encountered: 16 for $N=4$, 7 for $N=5$,
-and 1 each for $N=6,7,8$. In each case, the outer two extrema are local minima,
+computations, 26 degenerate cases were encountered: 16 for $n=4$, 7 for $n=5$,
+and 1 each for $n=6,7,8$. In each case, the outer two extrema are local minima,
 and the middle is a local maximum, and the ambiguity of the degeneracy was
 computed as the difference between the local minimum values of $d(\lambda)$. The
 ambiguities ranged from 0.15 to 65. In any case, these are very small numbers of
-images, within the scope of this study. Numbers as small as $N=4$ were included
+images, within the scope of this study. Numbers as small as $n=4$ were included
 only to provide context and continuity to the results for large numbers of
 images. As demonstrated by this study, the chance of degeneracy for a large
 number of images is negligible, and in any case it can be detected for manual
@@ -626,15 +625,15 @@ review.
 \subsection{Error Estimation}
 Review of Figures \ref{fig:vanilla_pred_meas}--\ref{fig:vanilla_pred_meas_sqrtn}
 suggests an empirical meth\-od of error estimation for Hourglassing. Predicted
-error decreases very predictably as $1/\sqrt N$. So an alternative method for
-estimating the error of a MIG with $N$ images would be to subsample $M \ll N$
+error decreases very predictably as $1/\sqrt n$. So an alternative method for
+estimating the error of a MIG with $n$ images would be to subsample $M \ll n$
 images many times, compute the sample covariance $C_M$ of the $M$-MIGs, and
-because of the $1/\sqrt N$ behavior (which is $1/N$ in variance space), and
-using a finite population correction, predict the error of the $N$-MIG to
-be $$C_N=C_M\frac{M}{N}\cdot\frac{N-1}{N-M}$$
+because of the $1/\sqrt n$ behavior (which is $1/n$ in variance space), and
+using a finite population correction, predict the error of the $n$-MIG to
+be $$C_n=C_M\frac{M}{n}\cdot\frac{n-1}{n-M}$$
 
-This allows estimation of error apart from the output covariance of the $N$-MIG
-(or even of any of the $M$-MIG). There's not much point to this for MIG, since
+This allows estimation of error apart from the output covariance of the $n$-MIG
+(or even of any of the $m$-MIG). There's not much point to this for MIG, since
 output covariance is a natural by-product of the MIG algorithm. But for
 Hourglassing, this provides a method of error estimation which requires no
 apriori error information, simply calculation of additional, smaller Hourglass
@@ -653,14 +652,14 @@ distribution of image rays is a reliable summary of the error of the process.
 
 \subsection{\label{hsimulation}Error Estimation Simulated Results}
 To evaluate this empirical method of error estimation for Hourglassing, a subset
-of $N=100$ images from $\Pimg$ were chosen, and an Hourglass-geolocation
-computed for them. Subsets of $M=N/4$ were sampled from the $N$-set, $k=100$
-times, and an Hourglass-geolocation is computed for each $M$-subset. 3x3 sample
+of $n=100$ images from $\Pimg$ were chosen, and an Hourglass-geolocation
+computed for them. Subsets of $m=n/4$ were sampled from the $n$-set, $k=100$
+times, and an Hourglass-geolocation is computed for each $m$-subset. 3x3 sample
 covariance was computed for those $k$ ground points, and then scaled by
-$1/(N/M)=M/N$ because of the $1/\sqrt{N}$ effect, and corrected also by a FPC
-factor of $(N-1)/(N-M)$, to yield the covariance estimate for the
-$N$-Hourglass. A MIG was also computed for the same $N$-subset, and its output
-covariance computed for reference. This experiment was repeated $R=100$ times.
+$1/(n/m)=m/n$ because of the $1/\sqrt{n}$ effect, and corrected also by a FPC
+factor of $(n-1)/(n-m)$, to yield the covariance estimate for the
+$n$-Hourglass. A MIG was also computed for the same $n$-subset, and its output
+covariance computed for reference. This experiment was repeated $r=100$ times.
 
 Figure \ref{fig:mig_vs_hourglass_var} shows the variance of X from MIG vs
 Hourglass error estimation. The Hourglass error estimation has more spread than MIG.
@@ -676,7 +675,7 @@ Hourglass error estimation. The Hourglass error estimation has more spread than 
   \includegraphics[width=1.2\linewidth]{fig_self_var_z.png}
 \end{subfigure}
 \caption{\label{fig:mig_vs_hourglass_var}MIG vs Hourglass estimated
-  variances. From left to right, the clusters represent $N=$400, 200 and 100
+  variances. From left to right, the clusters represent $n=$400, 200 and 100
   images.}
 \end{figure}
 
