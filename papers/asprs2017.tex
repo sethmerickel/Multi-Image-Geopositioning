@@ -73,8 +73,8 @@
 \vspace \baselineskip
 
 \noindent The geolocation error resulting from least-squares Multi-Image Geopositioning
-(MIG) with $N$ images is shown theoretically and empirically to decrease as
-$1/\sqrt{N}$, using a synthetically augmented set of 1000 overlapping
+(MIG) with $n$ images is shown theoretically and empirically to decrease as
+$1/\sqrt{n}$, using a synthetically augmented set of 1000 overlapping
 Worldview-1 images. A novel heuristic approach called `Hourglassing' is
 introduced, which requires no understanding of apriori covariance, but
 implicitly infers uncertainty from the distribution of the ray bundle
@@ -85,7 +85,8 @@ the 1000-image testbed.
 
 \section{Introduction}
 Least-squares Multi-Image Geopositioning (hereafter MIG) is well-under\-stood in
-photogrammetry\cite{LSQRMIG}, providing geolocation and output covariance that
+photogrammetry\cite{LSQRMIG}, \cite{PHOTO_CV}, \cite{MANUAL}, 
+providing geolocation and output covariance that
 are as accurate as the apriori projection and covariance data that are input
 into the process. However, for practical reasons, the number of images that have
 been used in MIG calculations have been rather small. Even after the advent of
@@ -123,7 +124,7 @@ information from huge numbers of images.
 
 \section{Least-Squares MIG With Many Images}
 \subsection{MIG Solution}\label{MIG}
-We begin with a derivation of least-squares MIG. For the details of this
+We begin with a derivation of least-squares MIG. For further details of this
 procedure see the discussion of the Gauss-Helmert model in \cite{LSQRMIG},
 \cite{PHOTO_CV}, \cite{MANUAL}.
 
@@ -134,8 +135,9 @@ independence between all images and measurements.
 
 The goal is therefore to determine the ground location that minimizes the weighted
 sum of image measurement and sensor parameter deviations using non-linear least
-squares. Let $\grnd = [X, Y, Z]'$ be the apriori position of the ground point
-being estimated.  $\imgmeas = [x_{i}, y_{i}]'$ is the measurement of the ground
+squares. Let $\grnd = [X, Y, Z]'$ be the an apriori estimate of the position of 
+the ground point being geolocated.
+$\imgmeas = [x_{i}, y_{i}]'$ is the measurement of the ground
 point in the $i$th image.  The sensor parameters for the $i$th image are
 $\sensmeas = [p_{i1}, p_{i2}, \ldots]'$. The ground point, image measurements,
 and sensor parameters are related through the sensor's ground to image function
@@ -195,7 +197,8 @@ W = ({W^x}^{-1} + A {W^p}^{-1} {A}')^{-1}
 
 This linear system can be solved for $\Delta$, which is used to correct the
 ground estimate $\grnd$. To the extent that partial derivative matrices $A$
-and $B$ evaluated at $\grnd$ vs $\grnd+\Delta$, this is a non-linear
+and $B$ evaluated at $\grnd$ vs $\grnd+\Delta$ differ from their values at $\grnd$, 
+this is a non-linear
 problem, so iteration is used to converge to a solution.  After each iteration
 the ground point locations from the previous iteration are updated $\pmb{X^k} =
 \pmb{X^{k - 1}} + \pmb{\Delta^k}$, and the partial derivative matrices $A$ and
@@ -212,7 +215,7 @@ the covariance of the ground point estimate is:
 C^g = (B'WB)^{-1}
 \end{equation}
 
-To understand how $C^g$ depends on the number of images, we establish and upper
+To understand how $C^g$ depends on the number of images $n$, we establish an upper
 bound on $C^g$ and show that the variance of each component decays as $1/N$
 where $N$ is the number of images.  As a metric for comparing covariance
 matrices, we use the volume of the standard ellipsoid $(X - \bar{X})'C^g(X -
@@ -240,13 +243,15 @@ B'WB & = & \sum_{i}B'_i(C^m_i + A_iC^p_iA'_i)^{-1}B_i \nonumber \\
 where $W_i = (C^m_i + A_iC^p_iA'_i)^{-1}$.
 
 If $A$ is an $n\times n$ matrix then let $\lambda_i(A)$ be the $i$th smallest
-eigenvalue of $A$.  In (\ref{btwb_eq}) each image contributes a term of $\btwbi$
+eigenvalue of $A$ (and in particular $\lambda_1(A)$ is the smallest eigenvalue).
+In (\ref{btwb_eq}) each image contributes a term of $\btwbi$
 to the sum. Because $W_i$ is $2\times 2$ and $B_i$ is $2\times 3$, each $\btwbi$
 is a rank-deficient $3\times 3$. The two eigenvectors of $\btwbi$ with nonzero
 eigenvalues are the rows of $B_i$ (the ground-space projections of the line and
 sample directions in image space), and the eigenvector corresponding to the
 eigenvalue $\lambda_1(\btwbi)=0$ is their cross-product, the line of sight ray
-projecting from the image measurement.
+projecting from the image measurement, out of the sensor
+(or perhaps into it, sign is not important).
 
 Assume two images and measurements $i$ and $j$ such that the rays from those
 measurements are identical/parallel. Call that vector $l$. Then
@@ -264,8 +269,8 @@ $\lambda_1(\btwbi+\btwbj)>0$. Let
 \delta = \min_{i}\lambda_1(\btwbi+\btwbii) > 0
 \end{equation}
 be the smallest $\lambda_1$ of the sum of {\em consecutive} $\btwbi$. Note that
-even for an infinite collection of images, it is possible for $\delta>0$, with
-care taken of the ordering of the images. For instance, consider a fixed stereo
+even for an infinite collection of images, it is possible for $\delta>0$, if
+care is taken ordering the images. For instance, consider a fixed stereo
 collection geometry, with arbitrarily many images collected from the exact
 position and orientation of the left and right camera stations. As long as the
 images are ordered alternating left, right, then
@@ -308,7 +313,7 @@ The pattern above illustrates the nature of the inductive step. For $n$ even,
 & = & \frac{n\delta}{2}
 \end{eqnarray*}
 %
-The proof for $n$ odd is similar. \qed
+The proof for odd $n$ is similar. \qed
 
 \vskip\baselineskip
 
@@ -321,8 +326,9 @@ eigenvalues are reciprocal, thus
 \lambda_i(C^g)\leq \frac{2}{(n-1)\delta}
 \end{equation}
 These eigenvalues are the variances of ground uncertainty in the directions of
-the three axes (eigenvectors). Thus we can see that the variance of ground error
-is bounded above by $O(1/n)$. This is equivalent to standard deviation
+the three axes (eigenvectors). (\ref{C_evals}) demonstrates that the variance of ground error
+is bounded above by $O(1/n)$, and decreases like $1/n$ as $n$ grows.
+This is equivalent to standard deviation
 decreasing like $O(\sfrac{1}{\sqrt{n}})$, a result which is consistent with the
 sweepingly general applicability of the Law of Large Numbers \cite{LLN}.
 
@@ -348,7 +354,7 @@ sensor models. The sensor model's ground to image function is used to project
 the truth point into image coordinates for each sensor model. These image
 measurements are retained as truth also, and used for all the following
 experimental ray-intersections. The ray bundle emanating from these truth image
-points intersect perfectly (to within computational precision of the image to
+points intersects perfectly (to within computational precision of the image to
 ground function) at the truth point in ground space. Let this idealized set of
 images and measurements be $\Iimg$.
 
@@ -375,8 +381,9 @@ each of these MIGs, and observe the distribution of error as $n$ increases.
 
 \begin{figure}
 \includegraphics[width=.7\textwidth]{fig_refvar.png}
-\caption{\label{fig:vanillaref}All reference variances. For every $n$, each of
-  the $k=100$ MIG generates one pixel in the graph.}
+\caption{\label{fig:vanillaref}Reference variances for every MIG
+  intersection. For every $n$, each of the $k=100$ MIG generates one pixel in
+  the graph.}
 \end{figure}
 
 \begin{figure}
