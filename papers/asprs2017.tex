@@ -115,7 +115,7 @@ each of three different satellites: IKONOS, QuickBird, and KOMPSAT-2. In
 similar to the Hourglassing method introduced in section \ref{hourglassing}).
 In \cite{LRO_NINE}, a team from the Chinese Academy of Sciences investigates MIG
 accuracy with 2--9 images of the moon from the Lunar Reconnaissance
-Orbiter. Wonnacott \cite{WONNACOT_32_3} analyzes MIG accuracy with SAR, using 32
+Orbiter. Wonnacott \cite{WONNACOTT_32_3} analyzes MIG accuracy with SAR, using 32
 image `sets' (each set being a `three-aperture path sequence').
 
 These image collections, however, represent only a fraction of what is currently
@@ -370,10 +370,11 @@ Once the ideal bundle $\Iimg$ is assembled, an image bundle with realistic
 errors can be constructed by perturbing sensor model parameters from $\Iimg$ with a
 controlled amount of error (randomly sampled from a known distribution), to
 obtain perturbed image set $\Pimg$. Nine position/velocity/ac\-cel\-eration
-parametrs are given $\sigma = 1{\mathrm m}, 0.1{\mathrm m}/{\mathrm s},
+parametrs are given sigmas of $\sigma = 1{\mathrm m}, 0.1{\mathrm m}/{\mathrm s},
 0.01{\mathrm m}^2/{\mathrm s}^2$, and 9 attitude/rate/acceleration parameters
-are given
-$\sigma=5\mu\mathrm{rad}, \sigma=0.5\mu\mathrm{rad}, \sigma=0.05\mu\mathrm{rad}$.
+are given sigmas of
+$\sigma=5\mu\mathrm{rad}, 0.5\mu\mathrm{rad}/{\mathrm s}, 
+0.05\mu\mathrm{rad}/{\mathrm s}^2$.
 This model yields a CE90 of about 6-8m for the original 10 images, depending
 on obliquity. Any subset of images of $\Pimg$ (along with the truth measurements
 on those images) can be used as a realistic input to least-squares MIG. Apriori
@@ -782,8 +783,9 @@ exploited to yield increasingly high accuracy geolocation.
 
 \bibitem{SGXP}SOCET GXP, {\tt http://geospatialexploitationproducts.com}
 
-\bibitem{FRESNO}Settergren, Reuben, Seth Merickel and Stewart Walker, Title?
-  Available online \cite{GITHUB}
+\bibitem{FRESNO}Settergren, R., S.~Merickel and S.~Walker, 2017. Reducing
+  geopositioning error with large numbers of images, 2017 Geomatics Engineering
+  Conference, Fresno, CA, 27 Jan 2017. 79 slides, available online \cite{GITHUB}
 
 \bibitem{PLANE_SWEEP}Szeliski, Richard, 2011. {\em Computer Vision}, Springer,
   London, p. 474.
@@ -791,7 +793,7 @@ exploited to yield increasingly high accuracy geolocation.
 \bibitem{FPC}Thompson, Steven K., 2012. {\em Sampling}, 3rd ed. Wiley, Hoboken,
   p. 15.
 
-\bibitem{WONNACOT_32_3}Wonnacot, W.~M., 2008. {\em Geolocation with Error Analysis
+\bibitem{WONNACOTT_32_3}Wonnacott, W.~M., 2008. {\em Geolocation with Error Analysis
   Using Imagery from an Experimental Spotlight SAR}, PhD Thesis, Purdue.
 % 32 SAR image ``sets'', each a ``three-aperture path sequence''
 
