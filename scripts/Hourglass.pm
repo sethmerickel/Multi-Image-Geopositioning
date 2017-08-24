@@ -676,22 +676,28 @@ sub wvmig {
   # it 0 computes and applies the step, it 1 is partial and just computes
   # weighted sum of residuals for refvar; returns output cov from end
   # of first iteration
-  for my $just_resids (0..1) {
+  for my $just_resids (0..5) { # its 0...4 are full, 5 is just for final resids
     my (@btwfs, @btwbs);
     my $sumres = 0;
 
     my $scale = 1.0;
     for my $iid (@iids) {
-      $W = ~($h->{$iid}->{ipart}) * $scov * $h->{$iid}->{ipart};
+      if ($ENV{IDENTITY_WEIGHT}) {
+	$W = mkdiag(2, 1,1);
+      } else {
+	$W = ~($h->{$iid}->{ipart}) * $scov * $h->{$iid}->{ipart};
+      }
       if ($ENV{SCALE_MIG_ERROR}) {
 	$iid =~ /ERROR(\d\d)/;
 	my $NN = $1;
 	$scale = 1.0 + $NN/99.0*4.0; # 00->1 99->5
       }
       $W *= $scale * $scale;
-      my $mvar = $h->{$iid}->{msig}*$h->{$iid}->{msig};
-      filldiag($Wmeas, $mvar, $mvar);
-      $W      += $Wmeas;
+      if ( ! $ENV{IDENTITY_WEIGHT} ) {
+	my $mvar = $h->{$iid}->{msig}*$h->{$iid}->{msig};
+	filldiag($Wmeas, $mvar, $mvar);
+	$W      += $Wmeas;
+      }
       $Winv = $W->inverse();
 
       $proj = wvg2i($h, $iid, $gp);
@@ -702,7 +708,7 @@ sub wvmig {
       $sumres += $wres->element(1,1);
       #printf "RES %8.3f %8.3f %10.3f\n", $res->element(1,1),
       #                                   $res->element(2,1), $sumres;
-      next if $just_resids;
+      next if $just_resids==5;
 
       $btw = ~($h->{$iid}->{gpart}) * $Winv;
       push @btwfs, $btw * $res;
@@ -710,7 +716,7 @@ sub wvmig {
     }
     my $refvar = $sumres / (2*$n-3);
     #print "It $just_resids refvar = $refvar\n";
-    if ($just_resids) {
+    if ($just_resids == 5) {
       ###################### RETURN #################
       return ($gp, $btwbinv, $refvar);
     }
